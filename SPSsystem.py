@@ -10,7 +10,7 @@ CHANNEL_ACCESS_TOKEN = "KR7Sclg6pbBPdSFHkwyz3czQpCKOzP6ppszkWFROU8kvM0QdV7XaQ6A7
 @app.route("/callback", methods=["POST"])
 def callback():
     data = request.get_json()
-    print(data, flush=True)  # Webhookが届いたか確認用
+    print(data, flush=True)  # Webhook届いたか確認用
 
     # イベント取得（複数イベントが来る可能性あり）
     for event in data.get("events", []):
