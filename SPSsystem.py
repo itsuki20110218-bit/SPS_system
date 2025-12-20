@@ -16,7 +16,7 @@ def callback():
     for event in data.get("events", []):
         reply_token = event["replyToken"]
         # 簡単に固定メッセージを返信
-        reply_message(reply_token, "auto_reply runed successful")
+        reply_message(reply_token, "auto_reply run successfully")
 
     return "OK"
 
