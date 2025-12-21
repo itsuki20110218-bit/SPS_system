@@ -15,6 +15,7 @@ def callback():
     # イベント取得（複数イベントが来る可能性あり）
     for event in data.get("events", []):
         reply_token = event["replyToken"]
+        user_id = event["source"]["userId"]
         # 簡単に固定メッセージを返信
         reply_message(reply_token, "auto_reply run successfully")
 
