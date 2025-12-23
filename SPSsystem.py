@@ -35,33 +35,40 @@ def callback():
     print(data, flush=True)
 
     for event in data.get("events", []):
+
+        if event["type"] != "message" or event["message"]["type"] != "text":
+            return "OK"
+        
         reply_token = event["replyToken"]
         user_id = event["source"]["userId"]
         users = load_users()
-        status = users[user_id]["status"]
         text = event["message"]["text"]
 
         if user_id not in users:
             reply_message(reply_token, "はじめまして。初回利用のため、ユーザー情報を登録します。\n本名を入力してください。")
             add_users(user_id)
-            return "OK"
+            continue
         
-        elif status == "waiting_name":
-            reply_message(reply_token, "本名を登録しました。次にクラスを入力してください。")
-            users[user_id]["status"] = "waiting_class"
-            users[user_id]["name"] = text
-            save_users(users)
-            return "OK"
-
-        elif status == "waiting_class":
-            reply_message(reply_token, "ユーザー情報の登録が完了しました。")
-            users[user_id]["status"] = "registered"
-            users[user_id]["class"] = text
-            return "OK"
-
         else:
-            reply_message(reply_token, "hello, " + users[user_id]["name"] + ".\n You've already registered.")
-            return "OK"
+            status = users[user_id]["status"]
+
+            if status == "waiting_name":
+                reply_message(reply_token, "本名を登録しました。次にクラスを入力してください。")
+                users[user_id]["status"] = "waiting_class"
+                users[user_id]["name"] = text
+                save_users(users)
+                return "OK"
+
+            elif status == "waiting_class":
+                reply_message(reply_token, "ユーザー情報の登録が完了しました。")
+                users[user_id]["status"] = "registered"
+                users[user_id]["class"] = text
+                save_users(users)
+                return "OK"
+
+            else:
+                reply_message(reply_token, "hello, " + users[user_id]["name"] + ".\n You've already registered.")
+                return "OK"
 
 def reply_message(reply_token, text):
     url = "https://api.line.me/v2/bot/message/reply"
