@@ -15,32 +15,52 @@ def load_users():
         return json.load(f)
 
 
-def add_users(user_id):
+def add_users(user_id): # ユーザー情報を追加
     users = load_users()
     users[user_id] = {
+        "status": "waiting_name",
         "name": "unknown",
         "class": "unknown"
     }
     with open(USER_FILE, "w", encoding= "utf-8") as f:
         json.dump(users, f, ensure_ascii= False, indent= 2)
 
+def save_users(users): # ユーザー情報を更新
+    with open(USER_FILE, "w", encoding= "utf-8") as f:
+        json.dump(users, f, ensure_ascii= False, indent= 2)
+
 @app.route("/callback", methods=["POST"])
 def callback():
     data = request.get_json()
-    print(data, flush=True)  # Webhook届いたか確認用
+    print(data, flush=True)
 
-    # イベント取得（複数イベントが来る可能性あり）
     for event in data.get("events", []):
         reply_token = event["replyToken"]
         user_id = event["source"]["userId"]
         users = load_users()
+        status = users[user_id]["status"]
+        text = event["message"]["text"]
 
         if user_id not in users:
-            reply_message(reply_token, "adding user infomation")
+            reply_message(reply_token, "はじめまして。初回利用のため、ユーザー情報を登録します。\n本名を入力してください。")
             add_users(user_id)
             return "OK"
+        
+        elif status == "waiting_name":
+            reply_message(reply_token, "本名を登録しました。次にクラスを入力してください。")
+            users[user_id]["status"] = "waiting_class"
+            users[user_id]["name"] = text
+            save_users(users)
+            return "OK"
+
+        elif status == "waiting_class":
+            reply_message(reply_token, "ユーザー情報の登録が完了しました。")
+            users[user_id]["status"] = "registered"
+            users[user_id]["class"] = text
+            return "OK"
+
         else:
-            reply_message(reply_token, "auto_reply run successfully")
+            reply_message(reply_token, "hello, " + users[user_id]["name"] + ".\n You've already registered.")
             return "OK"
 
 def reply_message(reply_token, text):
