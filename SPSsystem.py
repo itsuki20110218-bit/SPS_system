@@ -46,7 +46,7 @@ def callback():
         text = event["message"]["text"]
 
         if user_id not in users:
-            reply_message(reply_token, "はじめまして。初回利用のため、ユーザー情報を登録します。\n本名を入力してください。")
+            reply_message(reply_token, "はじめまして。初回利用のため、ユーザー情報を登録します。\n本名を送信してください。")
             add_users(user_id)
             return "OK"
         
@@ -56,10 +56,10 @@ def callback():
 
             if register_status == "waiting_name":
                 if text == "サービスを利用":
-                    reply_message(reply_token, "本名を入力してください。")
+                    reply_message(reply_token, "本名を送信してください。")
                     return "OK"
                 else:
-                    reply_message(reply_token, "本名を登録しました。次にクラスを入力してください。")
+                    reply_message(reply_token, "本名を登録しました。次にクラスを送信してください。")
                     users[user_id]["register_status"] = "waiting_class"
                     users[user_id]["name"] = text
                     save_users(users)
@@ -67,7 +67,7 @@ def callback():
                 
             elif register_status == "waiting_class":
                 if text != "A" and text != "B" and text != "C" and text != "D":
-                    reply_message(reply_token, "正しいクラスを入力してください。")
+                    reply_message(reply_token, "正しいクラスを送信してください。")
                     return "OK"
                 else:
                     reply_message(reply_token, "ユーザー情報の登録が完了しました。")
