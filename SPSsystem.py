@@ -83,6 +83,9 @@ def callback():
                         users[user_id]["service_status"] = "waiting_subject"
                         save_users(users)
                         return "OK"
+                    else:
+                        reply_message(reply_token, "こんにちは、" + users[user_id]["name"] + "さん。\n サービスを利用する際は、画面下部の「サービスを利用」ボタンをタップしてください。")
+                        return "OK"
 
                 elif service_status == "waiting_subject":
                     if text not in ["国語", "数学", "英語"]:
@@ -95,7 +98,7 @@ def callback():
                         return "OK"
                     
             else:
-                reply_message(reply_token, "こんにちは、" + users[user_id]["name"] + "さん。\n サービスを利用する際は、画面下部の「サービスを利用」ボタンをタップしてください。")
+                reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
                 return "OK"
 
 def reply_message(reply_token, text):
