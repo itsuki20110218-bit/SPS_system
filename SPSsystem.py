@@ -84,15 +84,15 @@ def callback():
                         save_users(users)
                         return "OK"
 
-                    elif service_status == "waiting_subject":
-                        if text not in ["国語", "数学", "英語"]:
-                            reply_message(reply_token, "利用可能な科目を選択してください。")
-                            return "OK"
-                        else:
-                            reply_message(reply_token, text + "のプリントを送信します。")
-                            users[user_id]["service_status"] = "None"
-                            save_users(users)
-                            return "OK"
+                elif service_status == "waiting_subject":
+                    if text not in ["国語", "数学", "英語"]:
+                        reply_message(reply_token, "利用可能な科目を選択してください。")
+                        return "OK"
+                    else:
+                        reply_message(reply_token, text + "のプリントを送信します。")
+                        users[user_id]["service_status"] = "None"
+                        save_users(users)
+                        return "OK"
                     
             else:
                 reply_message(reply_token, "こんにちは、" + users[user_id]["name"] + "さん。\n サービスを利用する際は、画面下部の「サービスを利用」ボタンをタップしてください。")
