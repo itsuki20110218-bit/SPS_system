@@ -21,7 +21,8 @@ def add_users(user_id): # ユーザー情報を追加
         "register_status": "waiting_name",
         "name": "unknown",
         "class": "unknown",
-        "service_status": "None"
+        "service_status": "-",
+        "current_subject": "-"
     }
     with open(USER_FILE, "w", encoding= "utf-8") as f:
         json.dump(users, f, ensure_ascii= False, indent= 2)
@@ -53,6 +54,7 @@ def callback():
         else:
             register_status = users[user_id]["register_status"]
             service_status = users[user_id]["service_status"]
+            current_subject = users[user_id]["current_subject"]
 
             if register_status == "waiting_name":
                 if text == "サービスを利用":
@@ -66,7 +68,7 @@ def callback():
                     return "OK"
                 
             elif register_status == "waiting_class":
-                if text != "A" and text != "B" and text != "C" and text != "D":
+                if text not in ["A", "B", "C", "D"]:
                     reply_message(reply_token, "正しいクラスを送信してください。")
                     return "OK"
                 else:
@@ -77,7 +79,13 @@ def callback():
                     return "OK"
 
             elif register_status == "registered":
-                if service_status == "None":
+                if text == "ユーザー情報再設定":
+                    reply_message(reply_token, "ユーザー情報を再設定します。\n本名を送信してください。")
+                    users[user_id]["register_status"] = "waiting_name"
+                    save_users(users)
+                    return "OK"
+                
+                if service_status == "-":
                     if text == "サービスを利用":
                         reply_message(reply_token, "科目を選択してください。\n1. 国語\n2. 数学\n3. 英語")
                         users[user_id]["service_status"] = "waiting_subject"
@@ -92,11 +100,24 @@ def callback():
                         reply_message(reply_token, "利用可能な科目を選択してください。")
                         return "OK"
                     else:
-                        reply_message(reply_token, text + "のプリントを送信します。")
-                        users[user_id]["service_status"] = "None"
+                        reply_message(reply_token, f"{text}が選択されました。\nプリント番号を選択してください。\n・No.1\n・No.2\n・No.3")
+                        users[user_id]["service_status"] = "waiting_print_number"
+                        users[user_id]["current_subject"] = text
                         save_users(users)
                         return "OK"
                     
+                elif service_status == "waiting_print_number":
+                    if text not in ["1", "2", "3"]:
+                        reply_message(reply_token, "指定されたプリントは見つかりませんでした。正しいプリント番号を選択してください。")
+                        return "OK"
+                    else:
+                        subject = users[user_id]["current_subject"]
+                        print_number = text
+                        reply_message(reply_token, f"{subject}のプリント{print_number}を送信します。")
+                        users[user_id]["service_status"] = "-"
+                        users[user_id]["current_subject"] = "-"
+                        save_users(users)
+                        return "OK"
             else:
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
                 return "OK"
