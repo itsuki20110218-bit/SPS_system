@@ -49,8 +49,8 @@ def callback():
         if event["type"] != "message":
             continue
 
-        message_type = event["message"]["type"]
-        reply_token = event["replyToken"]   # ローカル関数にしてるのはeventが来た時に使うから
+        message_type = event["message"]["type"] # ローカル関数にしてるのはeventが来た時に使うから
+        reply_token = event["replyToken"]
         user_id = event["source"]["userId"]
         users = load_users()
         if message_type == "text":
