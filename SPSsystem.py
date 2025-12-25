@@ -7,6 +7,9 @@ app = Flask(__name__)
 
 CHANNEL_ACCESS_TOKEN = "KR7Sclg6pbBPdSFHkwyz3czQpCKOzP6ppszkWFROU8kvM0QdV7XaQ6A7bqDOX27qiZCxBCLA6VWa+Ke85Ekni+Fxwi7vasS9dz4+q5KRVfbIN2uhF2XCSrLaJlsOeQAsnQDUE6O7tFyEZemn72DccAdB04t89/1O/w1cDnyilFU="
 USER_FILE = "users.json"
+ADMIN_IDS = [
+    "U4eb36bd4d473ed9db5848631fbb6c47d"
+    ]
 
 def load_users():
     if not os.path.exists(USER_FILE): 
@@ -21,8 +24,10 @@ def add_users(user_id): # ユーザー情報を追加
         "register_status": "waiting_name",
         "name": "unknown",
         "class": "unknown",
-        "service_status": "-",
-        "current_subject": "-"
+        "service_status": "None",
+        "current_subject": "None",
+        "admin_status": "-",
+        "admin_current_subject": "-"
     }
     with open(USER_FILE, "w", encoding= "utf-8") as f:
         json.dump(users, f, ensure_ascii= False, indent= 2)
@@ -31,6 +36,9 @@ def save_users(users): # ユーザー情報を更新
     with open(USER_FILE, "w", encoding= "utf-8") as f:
         json.dump(users, f, ensure_ascii= False, indent= 2)
 
+def is_admin(user_id):
+    return user_id in ADMIN_IDS
+
 @app.route("/callback", methods=["POST"])
 def callback():
     data = request.get_json()
@@ -38,23 +46,62 @@ def callback():
 
     for event in data.get("events", []):
 
-        if event["type"] != "message" or event["message"]["type"] != "text":
+        if event["type"] != "message":
             continue
-        
+
+        message_type = event["message"]["type"]
         reply_token = event["replyToken"]   # ローカル関数にしてるのはeventが来た時に使うから
         user_id = event["source"]["userId"]
         users = load_users()
-        text = event["message"]["text"]
+        if message_type == "text":
+            text = event["message"]["text"]
+        else:
+            text = None
 
         if user_id not in users:
             reply_message(reply_token, "はじめまして。初回利用のため、ユーザー情報を登録します。\n本名を送信してください。")
             add_users(user_id)
             return "OK"
         
+        elif is_admin(user_id):
+            admin_status = users[user_id]["admin_status"]
+            if text == "登録":
+                reply_message(reply_token, "登録するプリントの画像を送信してください。")
+                users[user_id]["admin_status"] = "waiting_image"
+                save_users(users)
+                return "OK"
+            
+            elif admin_status == "waiting_image":
+                if event["message"]["type"] == "image":
+                    reply_message(reply_token, "プリントの科目名を送信してください。")
+                    users[user_id]["admin_status"] = "waiting_subject"
+                    save_users(users)
+                    return "OK"
+                
+                elif message_type != "image":
+                    reply_message(reply_token, "画像ファイルを送信してください。")
+                    return "OK"
+                
+            elif admin_status == "waiting_subject":
+                subject = text
+                reply_message(reply_token, "プリント番号を送信してください。")
+                users[user_id]["admin_status"] = "waiting_print_number"
+                users[user_id]["admin_current_subject"] = subject
+                save_users(users)
+                return "OK"
+            
+            elif admin_status == "waiting_print_number":
+                print_number = text
+                reply_message(reply_token, f"{users[user_id]['admin_current_subject']}のプリント{print_number}を登録しました。")
+                users[user_id]["admin_status"] = "None"
+                users[user_id]["admin_current_subject"] = "None"
+                save_users(users)
+                return "OK"
+
         else:
             register_status = users[user_id]["register_status"]
             service_status = users[user_id]["service_status"]
-            current_subject = users[user_id]["current_subject"]
+            subject = users[user_id]["current_subject"]
 
             if register_status == "waiting_name":
                 if text == "サービスを利用":
@@ -84,10 +131,10 @@ def callback():
                     users[user_id]["register_status"] = "waiting_name"
                     save_users(users)
                     return "OK"
-                
-                if service_status == "-":
+
+                if service_status == "None":
                     if text == "サービスを利用":
-                        reply_message(reply_token, "科目を選択してください。\n1. 国語\n2. 数学\n3. 英語")
+                        reply_message(reply_token, "科目を選択してください。\n・国語\n・数学\n・英語")
                         users[user_id]["service_status"] = "waiting_subject"
                         save_users(users)
                         return "OK"
@@ -100,7 +147,7 @@ def callback():
                         reply_message(reply_token, "利用可能な科目を選択してください。")
                         return "OK"
                     else:
-                        reply_message(reply_token, f"{text}が選択されました。\nプリント番号を選択してください。\n・No.1\n・No.2\n・No.3")
+                        reply_message(reply_token, f"{text}が選択されました。\nプリント番号を選択してください。\n・1\n・2\n・3")
                         users[user_id]["service_status"] = "waiting_print_number"
                         users[user_id]["current_subject"] = text
                         save_users(users)
@@ -114,8 +161,8 @@ def callback():
                         subject = users[user_id]["current_subject"]
                         print_number = text
                         reply_message(reply_token, f"{subject}のプリント{print_number}を送信します。")
-                        users[user_id]["service_status"] = "-"
-                        users[user_id]["current_subject"] = "-"
+                        users[user_id]["service_status"] = "None"
+                        users[user_id]["current_subject"] = "None"
                         save_users(users)
                         return "OK"
             else:
