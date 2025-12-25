@@ -26,6 +26,7 @@ def add_users(user_id): # ユーザー情報を追加
         "class": "unknown",
         "service_status": "None",
         "current_subject": "None",
+        "mode": "user",
         "admin_status": "-",
         "admin_current_subject": "-"
     }
@@ -64,14 +65,16 @@ def callback():
             add_users(user_id)
             return "OK"
 
-        elif is_admin(user_id) and users[user_id]["admin_status"] != "-":
+        elif users[user_id]["mode"] == "admin":
             admin_status = users[user_id]["admin_status"]
-            if admin_status == "None":
+            if admin_status == "ready":
                 if text == "switch to default mode":
                     reply_message(reply_token, "通常モードに切り替えました。")
-                    users[user_id]["admin_status"] = "-"
+                    users[user_id]["admin_status"] = "idle"
+                    users[user_id]["mode"] = "user"
                     save_users(users)
                     return "OK"
+
                 elif text == "登録":
                     reply_message(reply_token, "登録するプリントの画像を送信してください。")
                     users[user_id]["admin_status"] = "waiting_image"
@@ -100,7 +103,7 @@ def callback():
             elif admin_status == "waiting_print_number":
                 print_number = text
                 reply_message(reply_token, f"{users[user_id]['admin_current_subject']}のプリント{print_number}を登録しました。")
-                users[user_id]["admin_status"] = "None"
+                users[user_id]["admin_status"] = "ready"
                 users[user_id]["admin_current_subject"] = "None"
                 save_users(users)
                 return "OK"
@@ -110,13 +113,14 @@ def callback():
             service_status = users[user_id]["service_status"]
             subject = users[user_id]["current_subject"]
 
-            if text == "switch to admin mode" and is_admin(user_id):
-                reply_message(reply_token, "管理者モードに切り替えました。")
-                users[user_id]["admin_status"] = "None"
+            if text == "switch to admin mode" and is_admin(user_id): # 管理モードに切り替え
+                reply_message(reply_token, "管理モードに切り替えました。")
+                users[user_id]["admin_status"] = "ready"
+                users[user_id]["mode"] = "admin"
                 save_users(users)
                 return "OK"
             
-            if register_status == "waiting_name":
+            elif register_status == "waiting_name":
                 if text == "サービスを利用":
                     reply_message(reply_token, "本名を送信してください。")
                     return "OK"
@@ -135,6 +139,10 @@ def callback():
                     reply_message(reply_token, "ユーザー情報の登録が完了しました。")
                     users[user_id]["register_status"] = "registered"
                     users[user_id]["class"] = text
+                    if is_admin(user_id):
+                        users[user_id]["mode"] = "admin"
+                        users[user_id]["admin_status"] = "ready"
+
                     save_users(users)
                     return "OK"
 
