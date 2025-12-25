@@ -58,18 +58,25 @@ def callback():
         else:
             text = None
 
+
         if user_id not in users:
             reply_message(reply_token, "はじめまして。初回利用のため、ユーザー情報を登録します。\n本名を送信してください。")
             add_users(user_id)
             return "OK"
-        
-        elif is_admin(user_id):
+
+        elif is_admin(user_id) and users[user_id]["admin_status"] != "-":
             admin_status = users[user_id]["admin_status"]
-            if text == "登録":
-                reply_message(reply_token, "登録するプリントの画像を送信してください。")
-                users[user_id]["admin_status"] = "waiting_image"
-                save_users(users)
-                return "OK"
+            if admin_status == "None":
+                if text == "switch to default mode":
+                    reply_message(reply_token, "通常モードに切り替えました。")
+                    users[user_id]["admin_status"] = "-"
+                    save_users(users)
+                    return "OK"
+                elif text == "登録":
+                    reply_message(reply_token, "登録するプリントの画像を送信してください。")
+                    users[user_id]["admin_status"] = "waiting_image"
+                    save_users(users)
+                    return "OK"
             
             elif admin_status == "waiting_image":
                 if event["message"]["type"] == "image":
@@ -103,6 +110,12 @@ def callback():
             service_status = users[user_id]["service_status"]
             subject = users[user_id]["current_subject"]
 
+            if text == "switch to admin mode" and is_admin(user_id):
+                reply_message(reply_token, "管理者モードに切り替えました。")
+                users[user_id]["admin_status"] = "None"
+                save_users(users)
+                return "OK"
+            
             if register_status == "waiting_name":
                 if text == "サービスを利用":
                     reply_message(reply_token, "本名を送信してください。")
