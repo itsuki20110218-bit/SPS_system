@@ -7,6 +7,7 @@ app = Flask(__name__)
 
 CHANNEL_ACCESS_TOKEN = "KR7Sclg6pbBPdSFHkwyz3czQpCKOzP6ppszkWFROU8kvM0QdV7XaQ6A7bqDOX27qiZCxBCLA6VWa+Ke85Ekni+Fxwi7vasS9dz4+q5KRVfbIN2uhF2XCSrLaJlsOeQAsnQDUE6O7tFyEZemn72DccAdB04t89/1O/w1cDnyilFU="
 USER_FILE = "users.json"
+PRINT_FILE = "prints.json"
 ADMIN_IDS = [
     "U4eb36bd4d473ed9db5848631fbb6c47d"
     ]
@@ -39,6 +40,26 @@ def save_users(users): # ユーザー情報を更新
 
 def is_admin(user_id):
     return user_id in ADMIN_IDS
+
+def load_prints():
+    if not os.path.exists(PRINT_FILE):
+        return {}
+    with open(PRINT_FILE, "r", encoding= "utf-8") as f:
+        return json.load(f)
+
+def save_image(message_id, save_path):
+    print_url = f"https://api-data.line.me/v2/bot/message/{message_id}/content"
+    headers = {
+        "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
+        }
+    response = requests.get(print_url, headers=headers)
+    with open(save_path, "wb") as f:
+        f.write(response.content)
+
+def save_prints(prints):
+    with open(PRINT_FILE, "w", encoding= "utf-8") as f:
+        json.dump(prints, f, ensure_ascii= False, indent= 2)
+
 
 @app.route("/callback", methods=["POST"])
 def callback():
@@ -82,9 +103,14 @@ def callback():
                     return "OK"
             
             elif admin_status == "waiting_image":
-                if event["message"]["type"] == "image":
+                if message_type == "image":
                     reply_message(reply_token, "プリントの科目名を送信してください。")
+                    message_id = event["message"]["id"]
+                    os.makedirs("temp", exist_ok=True)
+                    temp_path = f"temp/{message_id}.jpg"
+                    save_image(message_id, temp_path)
                     users[user_id]["admin_status"] = "waiting_subject"
+                    users[user_id]["admin_temp_image"] = temp_path
                     save_users(users)
                     return "OK"
                 
@@ -102,10 +128,24 @@ def callback():
             
             elif admin_status == "waiting_print_number":
                 print_number = text
-                reply_message(reply_token, f"{users[user_id]['admin_current_subject']}のプリント{print_number}を登録しました。")
+                subject = users[user_id]["admin_current_subject"]
+                temp_path = users[user_id]["admin_temp_image"]
+
+                os.makedirs("prints", exist_ok=True)
+                save_path = f"prints/{subject}_{print_number}.jpg"
+
+                os.rename(temp_path, save_path)
+
+                prints = load_prints()
+                prints.setdefault(subject, {})[print_number] = save_path
+                save_prints(prints)
+
                 users[user_id]["admin_status"] = "ready"
                 users[user_id]["admin_current_subject"] = "None"
+                users[user_id].pop("admin_temp_image", None)
                 save_users(users)
+
+                reply_message(reply_token, f"{subject}のプリント{print_number}を登録しました。")
                 return "OK"
 
         else:
