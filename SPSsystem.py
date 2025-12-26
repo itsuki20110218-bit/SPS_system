@@ -15,7 +15,7 @@ ADMIN_IDS = [
 def load_users():
     if not os.path.exists(USER_FILE): 
         return {}
-    with open(USER_FILE, "r", encoding= "utf-8") as f:
+    with open(USER_FILE, "r", encoding= "utf-8") as f: #fとして開く（省略）
         return json.load(f)
 
 
@@ -52,9 +52,9 @@ def save_image(message_id, save_path):
     headers = {
         "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
         }
-    response = requests.get(print_url, headers=headers)
+    response = requests.get(print_url, headers=headers) #画像データを取得
     with open(save_path, "wb") as f:
-        f.write(response.content)
+        f.write(response.content) #save_pathで指定したファイルを作成して画像データを書き込む
 
 def save_prints(prints):
     with open(PRINT_FILE, "w", encoding= "utf-8") as f:
@@ -106,8 +106,8 @@ def callback():
                 if message_type == "image":
                     reply_message(reply_token, "プリントの科目名を送信してください。")
                     message_id = event["message"]["id"]
-                    os.makedirs("temp", exist_ok=True)
-                    temp_path = f"temp/{message_id}.jpg"
+                    os.makedirs("temp", exist_ok=True) #tempフォルダ（一時保存用）を作成
+                    temp_path = f"temp/{message_id}.jpg" #パス作成
                     save_image(message_id, temp_path)
                     users[user_id]["admin_status"] = "waiting_subject"
                     users[user_id]["admin_temp_image"] = temp_path
