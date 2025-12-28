@@ -2,6 +2,7 @@ from flask import Flask, request
 import requests
 import json
 import os
+from urllib.parse import quote
 
 app = Flask(__name__)
 
@@ -237,7 +238,8 @@ def callback():
                             
                             else:
                                 image_path = prints[subject][print_number]
-                                image_url = f"{BASE_URL}/{image_path}"
+                                encoded_path = quote(image_path)
+                                image_url = f"{BASE_URL}/{encoded_path}"
 
                                 reply_image(reply_token, image_url)
                                 users[user_id]["service_status"] = "None"
