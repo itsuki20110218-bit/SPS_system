@@ -217,7 +217,9 @@ def callback():
                         reply_message(reply_token, "利用可能な科目を選択してください。")
                         return "OK"
                     else:
-                        reply_message(reply_token, f"{subject}が選択されました。\nプリント番号を選択してください。")
+                        numbers = prints[subject].keys()
+                        numbers_list = "\n".join([f"・{n}" for n in numbers])
+                        reply_message(reply_token, f"{subject}の利用可能なプリントはこちらです：\n{numbers_list}\nご希望のプリント名を送信してください。")
                         users[user_id]["service_status"] = "waiting_print_number"
                         users[user_id]["current_subject"] = subject
                         save_users(users)
@@ -225,27 +227,22 @@ def callback():
                     
                 elif service_status == "waiting_print_number":
                         subject = users[user_id]["current_subject"]
-                        print_number = text
+                        print_number = text.strip()
 
-                        if not print_number.isdigit():
-                            reply_message(reply_token, "プリント番号は数字で送信してください。")
+                        if print_number not in prints[subject]:
+                            reply_message(reply_token, "指定されたプリントは見つかりませんでした。")
                             return "OK"
-                        
-                        else:
-                            if print_number not in prints[subject]:
-                                reply_message(reply_token, "指定されたプリントは見つかりませんでした。")
-                                return "OK"
                             
-                            else:
-                                image_path = prints[subject][print_number]
-                                encoded_path = quote(image_path)
-                                image_url = f"{BASE_URL}/{encoded_path}"
+                        else:
+                            image_path = prints[subject][print_number]
+                            encoded_path = quote(image_path)
+                            image_url = f"{BASE_URL}/{encoded_path}"
 
-                                reply_image(reply_token, image_url)
-                                users[user_id]["service_status"] = "None"
-                                users[user_id]["current_subject"] = "None"
-                                save_users(users)
-                                return "OK"
+                            reply_image(reply_token, image_url)
+                            users[user_id]["service_status"] = "None"
+                            users[user_id]["current_subject"] = "None"
+                            save_users(users)
+                            return "OK"
                             
             else:
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
