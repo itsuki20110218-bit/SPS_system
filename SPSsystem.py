@@ -6,6 +6,7 @@ import os
 app = Flask(__name__)
 
 BASE_URL = "https://xs738029.xsrv.jp"
+PUBLIC_HTML = "/home/xs738029/xs738029.xsrv.jp/public_html"
 CHANNEL_ACCESS_TOKEN = "KR7Sclg6pbBPdSFHkwyz3czQpCKOzP6ppszkWFROU8kvM0QdV7XaQ6A7bqDOX27qiZCxBCLA6VWa+Ke85Ekni+Fxwi7vasS9dz4+q5KRVfbIN2uhF2XCSrLaJlsOeQAsnQDUE6O7tFyEZemn72DccAdB04t89/1O/w1cDnyilFU="
 USER_FILE = "users.json"
 PRINT_FILE = "prints.json"
@@ -133,13 +134,17 @@ def callback():
                 subject = users[user_id]["admin_current_subject"]
                 temp_path = users[user_id]["admin_temp_image"]
 
-                os.makedirs("prints", exist_ok=True)
-                save_path = f"xs738029.xsrv.jp/public_html/prints/{subject}_{print_number}.jpg"
+                prints_dir = os.path.join(PUBLIC_HTML, "prints")
+                os.makedirs(prints_dir, exist_ok=True)
+                save_path = os.path.join(
+                    prints_dir,
+                    f"{subject}_{print_number}.jpg"
+                )
 
                 os.rename(temp_path, save_path) #ファイルをsave_pathで指定した場所に移動
 
                 prints = load_prints()
-                prints.setdefault(subject, {})[print_number] = save_path
+                prints.setdefault(subject, {})[print_number] = f"prints/{subject}_{print_number}.jpg"
                 save_prints(prints)
 
                 users[user_id]["admin_status"] = "ready"
