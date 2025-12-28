@@ -5,6 +5,7 @@ import os
 
 app = Flask(__name__)
 
+BASE_URL = "https://xs738029.xsrv.jp"
 CHANNEL_ACCESS_TOKEN = "KR7Sclg6pbBPdSFHkwyz3czQpCKOzP6ppszkWFROU8kvM0QdV7XaQ6A7bqDOX27qiZCxBCLA6VWa+Ke85Ekni+Fxwi7vasS9dz4+q5KRVfbIN2uhF2XCSrLaJlsOeQAsnQDUE6O7tFyEZemn72DccAdB04t89/1O/w1cDnyilFU="
 USER_FILE = "users.json"
 PRINT_FILE = "prints.json"
@@ -75,6 +76,7 @@ def callback():
         reply_token = event["replyToken"]
         user_id = event["source"]["userId"]
         users = load_users()
+        prints = load_prints()
         if message_type == "text":
             text = event["message"]["text"]
         else:
@@ -132,9 +134,9 @@ def callback():
                 temp_path = users[user_id]["admin_temp_image"]
 
                 os.makedirs("prints", exist_ok=True)
-                save_path = f"prints/{subject}_{print_number}.jpg"
+                save_path = f"xs738029.xsrv.jp/public_html/prints/{subject}_{print_number}.jpg"
 
-                os.rename(temp_path, save_path)
+                os.rename(temp_path, save_path) #ファイルをsave_pathで指定した場所に移動
 
                 prints = load_prints()
                 prints.setdefault(subject, {})[print_number] = save_path
@@ -204,28 +206,40 @@ def callback():
                         return "OK"
 
                 elif service_status == "waiting_subject":
-                    if text not in ["国語", "数学", "英語"]:
+                    subject = text.strip()
+                    if subject not in prints:
                         reply_message(reply_token, "利用可能な科目を選択してください。")
                         return "OK"
                     else:
-                        reply_message(reply_token, f"{text}が選択されました。\nプリント番号を選択してください。\n・1\n・2\n・3")
+                        reply_message(reply_token, f"{subject}が選択されました。\nプリント番号を選択してください。")
                         users[user_id]["service_status"] = "waiting_print_number"
-                        users[user_id]["current_subject"] = text
+                        users[user_id]["current_subject"] = subject
                         save_users(users)
                         return "OK"
                     
                 elif service_status == "waiting_print_number":
-                    if text not in ["1", "2", "3"]:
-                        reply_message(reply_token, "指定されたプリントは見つかりませんでした。正しいプリント番号を選択してください。")
-                        return "OK"
-                    else:
                         subject = users[user_id]["current_subject"]
                         print_number = text
-                        reply_message(reply_token, f"{subject}のプリント{print_number}を送信します。")
-                        users[user_id]["service_status"] = "None"
-                        users[user_id]["current_subject"] = "None"
-                        save_users(users)
-                        return "OK"
+
+                        if not print_number.isdigit():
+                            reply_message(reply_token, "プリント番号は数字で送信してください。")
+                            return "OK"
+                        
+                        else:
+                            if print_number not in prints[subject]:
+                                reply_message(reply_token, "指定されたプリントは見つかりませんでした。")
+                                return "OK"
+                            
+                            else:
+                                image_path = prints[subject][print_number]
+                                image_url = f"{BASE_URL}/{image_path}"
+
+                                reply_image(reply_token, image_url)
+                                users[user_id]["service_status"] = "None"
+                                users[user_id]["current_subject"] = "None"
+                                save_users(users)
+                                return "OK"
+                            
             else:
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
                 return "OK"
@@ -243,3 +257,22 @@ def reply_message(reply_token, text):
         ]
     }
     requests.post(url, headers=headers, data=json.dumps(body))
+
+def reply_image(reply_token, image_url):
+    url = "https://api.line.me/v2/bot/message/reply"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
+        }
+    body = {
+        "replyToken": reply_token,
+        "messages": [
+            {
+                "type": "image",
+                "originalContentUrl": image_url,
+                "previewImageUrl": image_url
+            }
+        ]
+    }
+    requests.post(url, headers=headers, data=json.dumps(body))
+    
