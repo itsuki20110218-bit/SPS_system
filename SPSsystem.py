@@ -30,6 +30,7 @@ def add_users(user_id): # ユーザー情報を追加
         "class": "unknown",
         "service_status": "None",
         "current_subject": "None",
+        "print_page": 0,
         "mode": "user",
         "admin_status": "-",
         "admin_current_subject": "-"
@@ -62,6 +63,11 @@ def save_image(message_id, save_path):
 def save_prints(prints):
     with open(PRINT_FILE, "w", encoding= "utf-8") as f:
         json.dump(prints, f, ensure_ascii= False, indent= 2)
+
+def get_print_numbers_by_page(numbers, page, per_page=11):
+    start = page * per_page
+    end = start + per_page
+    return numbers[start:end]
 
 
 @app.route("/callback", methods=["POST"])
@@ -201,9 +207,17 @@ def callback():
                     save_users(users)
                     return "OK"
 
-                if service_status == "None":
+                elif text == "キャンセル" and service_status != "None":
+                    reply_message(reply_token, "サービス利用をキャンセルしました。")
+                    users[user_id]["service_status"] = "None"
+                    users[user_id]["current_subject"] = "None"
+                    users[user_id]["print_page"] = 0
+                    save_users(users)
+                    return "OK"
+                
+                elif service_status == "None":
                     if text == "サービスを利用":
-                        reply_message(reply_token, "科目を選択してください。\n・国語\n・数学\n・英語")
+                        reply_message(reply_token, "科目を選択してください。\n・国語\n・数学\n・英語", show_cancel=True)
                         users[user_id]["service_status"] = "waiting_subject"
                         save_users(users)
                         return "OK"
@@ -214,23 +228,32 @@ def callback():
                 elif service_status == "waiting_subject":
                     subject = text.strip()
                     if subject not in prints:
-                        reply_message(reply_token, "利用可能な科目を選択してください。")
+                        reply_message(reply_token, "利用可能な科目を選択してください。", show_cancel=True)
                         return "OK"
                     else:
                         numbers = prints[subject].keys()
                         numbers_list = "\n".join([f"・{n}" for n in numbers])
-                        reply_message(reply_token, f"{subject}の利用可能なプリントはこちらです：\n{numbers_list}\nご希望のプリント名を送信してください。")
+                        
                         users[user_id]["service_status"] = "waiting_print_number"
                         users[user_id]["current_subject"] = subject
                         save_users(users)
+                        reply_message(reply_token, f"{subject}の利用可能なプリントはこちらです：\n{numbers_list}\nご希望のプリント名を送信してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                         return "OK"
-                    
+                
                 elif service_status == "waiting_print_number":
                         subject = users[user_id]["current_subject"]
+
+                        if text == "次へ":
+                            users[user_id]["print_page"] += 1
+                            save_users(users)
+
+                            reply_message(reply_token, "次を表示します。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                            return "OK"
+
                         print_number = text.strip()
 
                         if print_number not in prints[subject]:
-                            reply_message(reply_token, "指定されたプリントは見つかりませんでした。")
+                            reply_message(reply_token, "指定されたプリントは見つかりませんでした。", show_cancel=True)
                             return "OK"
                             
                         else:
@@ -241,6 +264,7 @@ def callback():
                             reply_image(reply_token, image_url)
                             users[user_id]["service_status"] = "None"
                             users[user_id]["current_subject"] = "None"
+                            users[user_id]["print_page"] = 0
                             save_users(users)
                             return "OK"
                             
@@ -248,17 +272,65 @@ def callback():
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
                 return "OK"
 
-def reply_message(reply_token, text):
+def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False, user_id = None):
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
     }
+    message = {
+        "type": "text",
+        "text": text
+    }
+    if show_cancel:
+        items = []
+
+        if show_print_numbers:
+            prints = load_prints()
+            users = load_users()
+            subjects = users[user_id]["current_subject"]
+            page = users[user_id].get("print_page", 0)
+
+            all_numbers = list(prints[subjects].keys())
+            page_numbers = get_print_numbers_by_page(all_numbers, page)
+
+            for number in page_numbers:
+                items.append({
+                    "type": "action",
+                    "action": {
+                        "type": "message",
+                        "label": number,
+                        "text": number
+                    }
+                })
+
+            if (page + 1) * 11 < len(all_numbers):
+                items.append({
+                    "type": "action",
+                    "action": {
+                        "type": "message",
+                        "label": "次へ",
+                        "text": "次へ"
+                    }
+                })
+            
+        items.append({
+            "type": "action",
+            "action": {
+                "type": "message",
+                "label": "キャンセル",
+                "text": "キャンセル"
+            }
+        })
+
+        message["quickReply"] = {
+            "items": items
+        }
+
+    
     body = {
         "replyToken": reply_token,
-        "messages": [
-            {"type": "text", "text": text}
-        ]
+        "messages": [message]
     }
     requests.post(url, headers=headers, data=json.dumps(body))
 
