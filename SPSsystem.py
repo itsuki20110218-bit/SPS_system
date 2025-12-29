@@ -237,7 +237,7 @@ def callback():
                         users[user_id]["service_status"] = "waiting_print_number"
                         users[user_id]["current_subject"] = subject
                         save_users(users)
-                        reply_message(reply_token, f"{subject}の利用可能なプリントはこちらです：\n{numbers_list}\nご希望のプリント名を送信してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                        reply_message(reply_token, f"{subject}のご希望のプリント名を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                         return "OK"
                 
                 elif service_status == "waiting_print_number":
