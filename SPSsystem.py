@@ -30,7 +30,6 @@ def add_users(user_id): # ユーザー情報を追加
         "class": "unknown",
         "service_status": "None",
         "current_subject": "None",
-        "print_page": 0,
         "mode": "user",
         "admin_status": "-"
     }
@@ -102,8 +101,10 @@ def callback():
                 users[user_id]["admin_status"] = "ready"
                 users[user_id].pop("admin_current_subject", None)
                 users[user_id].pop("admin_temp_image", None)
+                users[user_id].pop("print_page", None)
                 save_users(users)
-                reply_message(reply_token, "登録をキャンセルしました。")
+                reply_message(reply_token, "キャンセル済み")
+                return "OK"
 
             if admin_status == "ready":
                 if text == "switch to default mode":
@@ -123,6 +124,7 @@ def callback():
                     reply_message(reply_token, "削除する教材の教科を送信してください。", show_cancel=True,)
                     users[user_id]["admin_status"] = "waiting_delete_subject"
                     save_users(users)
+                    return "OK"
             
             elif admin_status == "waiting_delete_subject":
                 subject = text.strip()
@@ -130,11 +132,14 @@ def callback():
                     reply_message(reply_token, "エラー：存在しない教科")
                     users[user_id]["admin_status"] = "ready"
                     save_users(users)
+                    return "OK"
                 else:
                     users[user_id]["admin_status"] = "waiting_delete_print"
                     users[user_id]["admin_current_subject"] = subject
+                    users[user_id]["print_page"] = 0
                     save_users(users)
                     reply_message(reply_token, "教材を選択：", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                    return "OK"
 
             elif admin_status == "waiting_delete_print":
                 subject = users[user_id]["admin_current_subject"]
@@ -143,7 +148,9 @@ def callback():
                     reply_message(reply_token, "エラー：存在しない教材")
                     users[user_id]["admin_status"] = "ready"
                     users[user_id].pop("admin_current_subject", None)
+                    users[user_id].pop("print_page",  None)
                     save_users(users)
+                    return "OK"
 
                 else:
                     image_path = prints[subject][print_number]
@@ -156,11 +163,13 @@ def callback():
                         del prints[subject]
 
                     reply_message(reply_token, f"削除済み：{subject} - {print_number}")
+                    users[user_id].pop("print_page", None)
                     save_prints(prints)
 
                 users[user_id]["admin_status"] = "ready"
                 users[user_id].pop("admin_current_subject", None)
                 save_users(users)
+                return "OK"
 
 
             elif admin_status == "waiting_image":
@@ -210,7 +219,7 @@ def callback():
                 users[user_id].pop("admin_temp_image", None)
                 save_users(users)
 
-                reply_message(reply_token, f"{subject}のプリント{print_number}を登録しました。")
+                reply_message(reply_token, f"登録済み：{subject} - {print_number}")
                 return "OK"
 
         else:
@@ -262,7 +271,7 @@ def callback():
                     reply_message(reply_token, "サービス利用をキャンセルしました。")
                     users[user_id]["service_status"] = "None"
                     users[user_id]["current_subject"] = "None"
-                    users[user_id]["print_page"] = 0
+                    users[user_id].pop("print_page", None)
                     save_users(users)
                     return "OK"
                 
@@ -284,8 +293,9 @@ def callback():
                     else:
                         users[user_id]["service_status"] = "waiting_print_number"
                         users[user_id]["current_subject"] = subject
+                        users[user_id]["print_page"] = 0
                         save_users(users)
-                        reply_message(reply_token, f"{subject}のご希望のプリント名を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                        reply_message(reply_token, f"{subject}は自動送信に対応しています。\nご希望の教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                         return "OK"
                 
                 elif service_status == "waiting_print_number":
@@ -316,12 +326,27 @@ def callback():
                             encoded_path = quote(image_path)
                             image_url = f"{BASE_URL}/{encoded_path}"
 
-                            reply_image(reply_token, image_url)
-                            users[user_id]["service_status"] = "None"
-                            users[user_id]["current_subject"] = "None"
-                            users[user_id]["print_page"] = 0
+                            reply_image(reply_token, image_url, subject, print_number)
+                            users[user_id]["service_status"] = "done"
+                            users[user_id].pop("print_page", None)
                             save_users(users)
                             return "OK"
+                        
+                elif service_status == "done":
+                    if text == "終了する":
+                        reply_message(reply_token, "ご利用ありがとうございました。")
+                        users[user_id]["service_status"] = "None"
+                        users[user_id]["current_subject"] = "None"
+                        save_users(users)
+                        return "OK"
+
+                    elif text == "続ける":
+                        subject = users[user_id]["current_subject"]
+                        reply_message(reply_token, f"{subject}を続けて取得します。\nご希望の教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                        users[user_id]["service_status"] = "waiting_print_number"
+                        save_users(users)
+                        return "OK"
+
                             
             else:
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
@@ -393,7 +418,7 @@ def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False
     }
     requests.post(url, headers=headers, data=json.dumps(body))
 
-def reply_image(reply_token, image_url):
+def reply_image(reply_token, image_url, subject, print_number):
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
@@ -406,8 +431,32 @@ def reply_image(reply_token, image_url):
                 "type": "image",
                 "originalContentUrl": image_url,
                 "previewImageUrl": image_url
+            },
+            {
+                "type": "text",
+                "text": f"{subject}の{print_number}です。",
+                "quickReply": {
+                    "items": [
+                        {
+                            "type": "action",
+                            "action": {
+                                "type": "message",
+                                "label": f"{subject}の取得を続ける",
+                                "text": "続ける"
+                            }
+                        },
+                        {
+                            "type": "action",
+                            "action": {
+                                "type": "message",
+                                "label": "終了する",
+                                "text": "終了する"
+                            }
+                        }
+                    ]
+                }
             }
         ]
     }
+
     requests.post(url, headers=headers, data=json.dumps(body))
-    
