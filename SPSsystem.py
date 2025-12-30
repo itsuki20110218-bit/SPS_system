@@ -126,16 +126,24 @@ def callback():
             
             elif admin_status == "waiting_delete_subject":
                 subject = text.strip()
-                users[user_id]["admin_status"] = "waiting_delete_print"
-                users[user_id]["admin_current_subject"] = subject
-                save_users(users)
-                reply_message(reply_token, "削除する教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                if subject not in prints:
+                    reply_message(reply_token, "エラー：存在しない教科")
+                    users[user_id]["admin_status"] = "ready"
+                    save_users(users)
+                else:
+                    users[user_id]["admin_status"] = "waiting_delete_print"
+                    users[user_id]["admin_current_subject"] = subject
+                    save_users(users)
+                    reply_message(reply_token, "教材を選択：", show_cancel=True, show_print_numbers=True, user_id=user_id)
 
             elif admin_status == "waiting_delete_print":
                 subject = users[user_id]["admin_current_subject"]
                 print_number = text.strip()
-                if subject not in prints or print_number not in prints[subject]:
-                    reply_message(reply_token, "指定した教科または教材は存在しません。")
+                if print_number not in prints[subject]:
+                    reply_message(reply_token, "エラー：存在しない教材")
+                    users[user_id]["admin_status"] = "ready"
+                    users[user_id].pop("admin_current_subject", None)
+                    save_users(users)
 
                 else:
                     image_path = prints[subject][print_number]
