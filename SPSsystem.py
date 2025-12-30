@@ -144,6 +144,19 @@ def callback():
             elif admin_status == "waiting_delete_print":
                 subject = users[user_id]["admin_current_subject"]
                 print_number = text.strip()
+                if text == "次へ":
+                        all_numbers = list(prints[subject].keys())
+                        max_page = (len(all_numbers) - 1) // 11
+
+                        if max_page <= users[user_id]["print_page"]:
+                            return "OK"
+
+                        else:
+                            users[user_id]["print_page"] += 1
+                            save_users(users)
+                            reply_message(reply_token, "次を表示します。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                            return "OK"
+                        
                 if print_number not in prints[subject]:
                     reply_message(reply_token, "エラー：存在しない教材")
                     users[user_id]["admin_status"] = "ready"
