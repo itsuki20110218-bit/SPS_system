@@ -32,8 +32,7 @@ def add_users(user_id): # ユーザー情報を追加
         "current_subject": "None",
         "print_page": 0,
         "mode": "user",
-        "admin_status": "-",
-        "admin_current_subject": "-"
+        "admin_status": "-"
     }
     with open(USER_FILE, "w", encoding= "utf-8") as f:
         json.dump(users, f, ensure_ascii= False, indent= 2)
@@ -98,6 +97,14 @@ def callback():
 
         elif users[user_id]["mode"] == "admin":
             admin_status = users[user_id]["admin_status"]
+
+            if text == "キャンセル" and admin_status != "ready":
+                users[user_id]["admin_status"] = "ready"
+                users[user_id].pop("admin_current_subject", None)
+                users[user_id].pop("admin_temp_image", None)
+                save_users(users)
+                reply_message(reply_token, "登録をキャンセルしました。")
+
             if admin_status == "ready":
                 if text == "switch to default mode":
                     reply_message(reply_token, "通常モードに切り替えました。")
@@ -105,16 +112,52 @@ def callback():
                     users[user_id]["mode"] = "user"
                     save_users(users)
                     return "OK"
-
+            
                 elif text == "登録":
-                    reply_message(reply_token, "登録するプリントの画像を送信してください。")
+                    reply_message(reply_token, "登録する教材の画像を送信してください。", show_cancel=True)
                     users[user_id]["admin_status"] = "waiting_image"
                     save_users(users)
                     return "OK"
+                
+                elif text == "削除":
+                    reply_message(reply_token, "削除する教材の教科を送信してください。", show_cancel=True,)
+                    users[user_id]["admin_status"] = "waiting_delete_subject"
+                    save_users(users)
             
+            elif admin_status == "waiting_delete_subject":
+                subject = text.strip()
+                users[user_id]["admin_status"] = "waiting_delete_print"
+                users[user_id]["admin_current_subject"] = subject
+                save_users(users)
+                reply_message(reply_token, "削除する教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+
+            elif admin_status == "waiting_delete_print":
+                subject = users[user_id]["admin_current_subject"]
+                print_number = text.strip()
+                if subject not in prints or print_number not in prints[subject]:
+                    reply_message(reply_token, "指定した教科または教材は存在しません。")
+
+                else:
+                    image_path = prints[subject][print_number]
+                    file_path = os.path.join(PUBLIC_HTML, image_path)
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                    del prints[subject][print_number]
+
+                    if not prints[subject]:
+                        del prints[subject]
+
+                    reply_message(reply_token, f"削除済み：{subject} - {print_number}")
+                    save_prints(prints)
+
+                users[user_id]["admin_status"] = "ready"
+                users[user_id].pop("admin_current_subject", None)
+                save_users(users)
+
+
             elif admin_status == "waiting_image":
                 if message_type == "image":
-                    reply_message(reply_token, "プリントの科目名を送信してください。")
+                    reply_message(reply_token, "プリントの科目名を送信してください。", show_cancel=True)
                     message_id = event["message"]["id"]
                     os.makedirs("temp", exist_ok=True) #tempフォルダ（一時保存用）を作成
                     temp_path = f"temp/{message_id}.jpg" #パス作成
@@ -155,7 +198,7 @@ def callback():
                 save_prints(prints)
 
                 users[user_id]["admin_status"] = "ready"
-                users[user_id]["admin_current_subject"] = "None"
+                users[user_id].pop("admin_current_subject", None)
                 users[user_id].pop("admin_temp_image", None)
                 save_users(users)
 
@@ -231,9 +274,6 @@ def callback():
                         reply_message(reply_token, "利用可能な科目を選択してください。", show_cancel=True)
                         return "OK"
                     else:
-                        numbers = prints[subject].keys()
-                        numbers_list = "\n".join([f"・{n}" for n in numbers])
-                        
                         users[user_id]["service_status"] = "waiting_print_number"
                         users[user_id]["current_subject"] = subject
                         save_users(users)
@@ -244,11 +284,18 @@ def callback():
                         subject = users[user_id]["current_subject"]
 
                         if text == "次へ":
-                            users[user_id]["print_page"] += 1
-                            save_users(users)
+                            all_numbers = list(prints[subject].keys())
+                            max_page = (len(all_numbers) - 1) // 11
 
-                            reply_message(reply_token, "次を表示します。", show_cancel=True, show_print_numbers=True, user_id=user_id)
-                            return "OK"
+                            if max_page <= users[user_id]["print_page"]:
+                                return "OK"
+
+                            else:
+                                users[user_id]["print_page"] += 1
+                                save_users(users)
+                                reply_message(reply_token, "次を表示します。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                                return "OK"
+
 
                         print_number = text.strip()
 
@@ -288,7 +335,11 @@ def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False
         if show_print_numbers:
             prints = load_prints()
             users = load_users()
-            subjects = users[user_id]["current_subject"]
+            if users[user_id]["mode"] == "admin":
+                subjects = users[user_id]["admin_current_subject"]
+            else:
+                subjects = users[user_id]["current_subject"]
+            
             page = users[user_id].get("print_page", 0)
 
             all_numbers = list(prints[subjects].keys())
