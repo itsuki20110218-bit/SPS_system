@@ -299,6 +299,8 @@ def callback():
                         return "OK"
                     
                     if text == "その他":
+                        reply_message(reply_token, "メッセージありがとうございます。\nこの機能は現在開発中です。\n申し訳ありませんが、正式なリリースまでもうしばらくお待ちください。")
+                        return "OK"
                         
 
                 elif service_status == "waiting_subject":
