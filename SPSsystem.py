@@ -297,6 +297,9 @@ def callback():
                     else:
                         reply_message(reply_token, "こんにちは、" + users[user_id]["name"] + "さん。\n サービスを利用する際は、画面下部の「サービスを利用」ボタンをタップしてください。")
                         return "OK"
+                    
+                    if text == "その他":
+                        
 
                 elif service_status == "waiting_subject":
                     subject = text.strip()
