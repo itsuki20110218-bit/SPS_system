@@ -15,6 +15,10 @@ ADMIN_IDS = [
     "U4eb36bd4d473ed9db5848631fbb6c47d"
     ]
 
+def load_flex_message(filename):
+    with open(filename, "r", encoding="utf-8") as f:
+        return json.load(f)
+
 def load_users():
     if not os.path.exists(USER_FILE): 
         return {}
@@ -290,7 +294,7 @@ def callback():
                 
                 elif service_status == "None":
                     if text == "サービスを利用":
-                        reply_message(reply_token, "科目を選択してください。\n・国語\n・数学\n・英語", show_cancel=True)
+                        reply_message(reply_token, "科目を選択してください。", show_cancel=True, show_subjects=True)
                         users[user_id]["service_status"] = "waiting_subject"
                         save_users(users)
                         return "OK"
@@ -371,16 +375,26 @@ def callback():
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
                 return "OK"
 
-def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False, user_id = None):
+def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False, show_subjects=False, user_id = None):
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
     }
-    message = {
-        "type": "text",
-        "text": text
-    }
+    if show_subjects:
+        contents = load_flex_message("select_subject.json")
+        message = {
+                "type": "flex",
+                "altText": text,
+                "contents": contents
+            }
+
+    else:
+        message = {
+                "type": "text",
+                "text": text
+            }
+
     if show_cancel:
         items = []
 
@@ -427,8 +441,8 @@ def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False
         })
 
         message["quickReply"] = {
-            "items": items
-        }
+                "items": items
+            }
 
     
     body = {

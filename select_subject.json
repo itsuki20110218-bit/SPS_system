@@ -1,2 +1,70 @@
 {
+    "type": "bubble",
+    "body": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "md",
+        "contents": [
+            {
+                "type": "text",
+                "text": "科目を選択してください",
+                "weight": "bold",
+                "size": "lg"
+            },
+            {
+                "type": "button",
+                "style": "primary",
+                "action": {
+                    "type": "message",
+                    "label": "国語",
+                    "text": "国語"
+                }
+            },
+            {
+                "type": "button",
+                "style": "primary",
+                "action": {
+                    "type": "message",
+                    "label": "数学",
+                    "text": "数学"
+                }
+            },
+            {
+                "type": "button",
+                "style": "primary",
+                "action": {
+                    "type": "message",
+                    "label": "理科",
+                    "text": "理科"
+                }
+            },
+            {
+                "type": "button",
+                "style": "primary",
+                "action": {
+                    "type": "message",
+                    "label": "公民",
+                    "text": "公民"
+                }
+            },
+            {
+                "type": "button",
+                "style": "primary",
+                "action": {
+                    "type": "message",
+                    "label": "英語",
+                    "text": "英語"
+                }
+            },
+            {
+                "type": "button",
+                "style": "primary",
+                "action": {
+                    "type": "message",
+                    "label": "保健",
+                    "text": "保健"
+                }
+            }
+        ]
+    }
 }
