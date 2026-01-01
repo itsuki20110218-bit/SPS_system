@@ -17,10 +17,6 @@ ADMIN_IDS = [
 
 subjects = ["国語", "数学", "理科", "公民", "英語"]
 
-def load_flex_message(filename):
-    with open(filename, "r", encoding="utf-8") as f:
-        return json.load(f)
-
 def load_users():
     if not os.path.exists(USER_FILE): 
         return {}
@@ -300,27 +296,31 @@ def callback():
                         users[user_id]["service_status"] = "waiting_subject"
                         save_users(users)
                         return "OK"
-                    else:
-                        reply_message(reply_token, "こんにちは、" + users[user_id]["name"] + "さん。\n サービスを利用する際は、画面下部の「サービスを利用」ボタンをタップしてください。")
+                    
+                    elif text == "その他":
+                        reply_message(reply_token, "メッセージありがとうございます。\nこの機能は現在開発中です。\n申し訳ありませんが、正式なリリースまでもうしばらくお待ちください。")
                         return "OK"
                     
-                    if text == "その他":
-                        reply_message(reply_token, "メッセージありがとうございます。\nこの機能は現在開発中です。\n申し訳ありませんが、正式なリリースまでもうしばらくお待ちください。")
+                    else:
+                        reply_message(reply_token, "こんにちは、" + users[user_id]["name"] + "さん。\n サービスを利用する際は、画面下部の「サービスを利用」ボタンをタップしてください。")
                         return "OK"
                         
 
                 elif service_status == "waiting_subject":
                     subject = text.strip()
-                    if subject in subjects and not in prints:
-                        reply_message(reply_token, "利用可能な科目を選択してください。", show_cancel=True)
-                        return "OK"
-                    else:
-                        users[user_id]["service_status"] = "waiting_print_number"
-                        users[user_id]["current_subject"] = subject
-                        users[user_id]["print_page"] = 0
-                        save_users(users)
-                        reply_message(reply_token, f"{subject}は自動送信に対応しています。\nご希望の教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
-                        return "OK"
+                    if subject in subjects:
+                        if subject not in prints:
+                            reply_message(reply_token, "自動送信が可能な教材がありません。\n担当者が返信しますので、ご希望の教材を送信してお待ちください。", show_cancel=True)
+                            users[user_id]["service_status"] = "done"
+                            save_users(users)
+                            return "OK"
+                        else:
+                            users[user_id]["service_status"] = "waiting_print_number"
+                            users[user_id]["current_subject"] = subject
+                            users[user_id]["print_page"] = 0
+                            save_users(users)
+                            reply_message(reply_token, f"{subject}は自動送信に対応しています。\nご希望の教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                            return "OK"
                 
                 elif service_status == "waiting_print_number":
                         subject = users[user_id]["current_subject"]
@@ -379,24 +379,30 @@ def callback():
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
                 return "OK"
 
-def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False, show_subjects=False, user_id = None):
+def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False, show_end=False, user_id = None):
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
     }
-    if show_subjects:
-        message = load_flex_message("select_subject.json")
-
-    else:
-        message = {
-                "type": "text",
-                "text": text
+    message = {
+            "type": "text",
+            "text": text
+        }
+        
+    items = []
+    if show_end:
+        items.append({
+            "type": "action",
+            "action": {
+                "type": "message",
+                "label": "終了する",
+                "text": "終了する"
+                }
             }
-
+        )
+        
     if show_cancel:
-        items = []
-
         if show_print_numbers:
             prints = load_prints()
             users = load_users()
@@ -439,9 +445,9 @@ def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False
             }
         })
 
-        message["quickReply"] = {
-                "items": items
-            }
+    message["quickReply"] = {
+            "items": items
+        }
 
     
     body = {
