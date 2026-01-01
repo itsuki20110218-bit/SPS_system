@@ -308,7 +308,7 @@ def callback():
 
                 elif service_status == "waiting_subject":
                     subject = text.strip()
-                    if subject in subjects:
+                    if subject in all_subjects:
                         if subject not in prints:
                             reply_message(reply_token, "自動送信が可能な教材がありません。\n担当者が返信しますので、ご希望の教材を送信してお待ちください。", show_cancel=True)
                             users[user_id]["service_status"] = "done"
