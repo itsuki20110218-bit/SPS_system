@@ -461,7 +461,8 @@ def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False
             }
     })
 
-    message["quickReply"] = {
+    if items:
+        message["quickReply"] = {
             "items": items
         }
 
