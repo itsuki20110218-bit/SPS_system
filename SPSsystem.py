@@ -292,7 +292,7 @@ def callback():
                 
                 elif service_status == "None":
                     if text == "サービスを利用":
-                        reply_message(reply_token, "科目を選択してください。", show_subjects=True)
+                        reply_message(reply_token, "科目を選択してください。", show_cancel=True, show_subjects=True)
                         users[user_id]["service_status"] = "waiting_subject"
                         save_users(users)
                         return "OK"
@@ -379,7 +379,7 @@ def callback():
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
                 return "OK"
 
-def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False, show_end=False, user_id = None):
+def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False, show_subjects=False, show_end=False, user_id = None):
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
@@ -401,7 +401,18 @@ def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False
                 }
             }
         )
-        
+
+    if show_subjects:
+        for subject in subjects:
+            items.append({
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": subject,
+                    "text": subject
+                }
+            })
+
     if show_cancel:
         if show_print_numbers:
             prints = load_prints()
