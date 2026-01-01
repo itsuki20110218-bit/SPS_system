@@ -294,7 +294,7 @@ def callback():
                 
                 elif service_status == "None":
                     if text == "サービスを利用":
-                        reply_message(reply_token, "科目を選択してください。", show_cancel=True, show_subjects=True)
+                        reply_message(reply_token, "科目を選択してください。", show_subjects=True)
                         users[user_id]["service_status"] = "waiting_subject"
                         save_users(users)
                         return "OK"
@@ -382,12 +382,7 @@ def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False
         "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
     }
     if show_subjects:
-        contents = load_flex_message("select_subject.json")
-        message = {
-                "type": "flex",
-                "altText": text,
-                "contents": contents
-            }
+        message = load_flex_message("select_subject.json")
 
     else:
         message = {
