@@ -300,13 +300,12 @@ def callback():
                         users[user_id]["service_status"] = "waiting_subject"
                         save_users(users)
                         return "OK"
-                    
-                    elif text == "その他":
-                        reply_message(reply_token, "メッセージありがとうございます。\nこの機能は現在開発中です。\n申し訳ありませんが、正式なリリースまでもうしばらくお待ちください。")
-                        return "OK"
-                    
                     else:
                         reply_message(reply_token, "こんにちは、" + users[user_id]["name"] + "さん。\n サービスを利用する際は、画面下部の「サービスを利用」ボタンをタップしてください。")
+                        return "OK"
+                    
+                    if text == "その他":
+                        reply_message(reply_token, "メッセージありがとうございます。\nこの機能は現在開発中です。\n申し訳ありませんが、正式なリリースまでもうしばらくお待ちください。")
                         return "OK"
                         
 
