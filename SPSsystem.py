@@ -15,7 +15,7 @@ ADMIN_IDS = [
     "U4eb36bd4d473ed9db5848631fbb6c47d"
     ]
 
-subjects = ["国語", "数学", "理科", "公民", "英語"]
+all_subjects = ["国語", "数学", "理科", "公民", "英語"]
 
 def load_users():
     if not os.path.exists(USER_FILE): 
@@ -321,6 +321,10 @@ def callback():
                             save_users(users)
                             reply_message(reply_token, f"{subject}は自動送信に対応しています。\nご希望の教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                             return "OK"
+                        
+                    else:
+                        reply_message(reply_token, "教科が見つかりませんでした。", show_cancel=True)
+                        return "OK"
                 
                 elif service_status == "waiting_print_number":
                         subject = users[user_id]["current_subject"]
@@ -403,7 +407,7 @@ def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False
         )
 
     if show_subjects:
-        for subject in subjects:
+        for subject in all_subjects:
             items.append({
                 "type": "action",
                 "action": {
@@ -413,40 +417,41 @@ def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False
                 }
             })
 
+    if show_print_numbers:
+        prints = load_prints()
+        users = load_users()
+        if users[user_id]["mode"] == "admin":
+            subjects = users[user_id]["admin_current_subject"]
+        else:
+            subjects = users[user_id]["current_subject"]
+            
+        page = users[user_id].get("print_page", 0)
+
+        all_numbers = list(prints.get(subjects, {}).keys())
+        page_numbers = get_print_numbers_by_page(all_numbers, page)
+
+        for number in page_numbers:
+            items.append({
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": number,
+                    "text": number
+                }
+            })
+
+        if (page + 1) * 11 < len(all_numbers):
+            items.append({
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": "次へ",
+                    "text": "次へ"
+                }
+            })
+            
+        
     if show_cancel:
-        if show_print_numbers:
-            prints = load_prints()
-            users = load_users()
-            if users[user_id]["mode"] == "admin":
-                subjects = users[user_id]["admin_current_subject"]
-            else:
-                subjects = users[user_id]["current_subject"]
-            
-            page = users[user_id].get("print_page", 0)
-
-            all_numbers = list(prints[subjects].keys())
-            page_numbers = get_print_numbers_by_page(all_numbers, page)
-
-            for number in page_numbers:
-                items.append({
-                    "type": "action",
-                    "action": {
-                        "type": "message",
-                        "label": number,
-                        "text": number
-                    }
-                })
-
-            if (page + 1) * 11 < len(all_numbers):
-                items.append({
-                    "type": "action",
-                    "action": {
-                        "type": "message",
-                        "label": "次へ",
-                        "text": "次へ"
-                    }
-                })
-            
         items.append({
             "type": "action",
             "action": {
@@ -454,7 +459,7 @@ def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False
                 "label": "キャンセル",
                 "text": "キャンセル"
             }
-        })
+    })
 
     message["quickReply"] = {
             "items": items
