@@ -15,6 +15,8 @@ ADMIN_IDS = [
     "U4eb36bd4d473ed9db5848631fbb6c47d"
     ]
 
+subjects = ["国語", "数学", "理科", "公民", "英語"]
+
 def load_flex_message(filename):
     with open(filename, "r", encoding="utf-8") as f:
         return json.load(f)
@@ -310,7 +312,7 @@ def callback():
 
                 elif service_status == "waiting_subject":
                     subject = text.strip()
-                    if subject not in prints:
+                    if subject in subjects and not in prints:
                         reply_message(reply_token, "利用可能な科目を選択してください。", show_cancel=True)
                         return "OK"
                     else:
@@ -368,6 +370,9 @@ def callback():
                         reply_message(reply_token, f"{subject}を続けて取得します。\nご希望の教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                         users[user_id]["service_status"] = "waiting_print_number"
                         save_users(users)
+                        return "OK"
+                    
+                    else:
                         return "OK"
 
                             
