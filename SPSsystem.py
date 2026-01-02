@@ -255,6 +255,7 @@ def callback():
                 if text in ["もらう", "その他"] or len(text) > 6 or len(text) <= 2:
                     reply_message(reply_token, f'"{text}"は登録できません。本名の送信をお願いします。')
                     return "OK"
+                
                 else:
                     reply_message(reply_token, "本名を登録しました。次にクラスを送信してください。", show_class=True)
                     users[user_id]["register_status"] = "waiting_class"
@@ -321,11 +322,11 @@ def callback():
                             users[user_id]["current_subject"] = subject
                             users[user_id]["print_page"] = 0
                             save_users(users)
-                            reply_message(reply_token, f"{subject}は自動送信に対応しています。\nご希望の教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                            reply_message(reply_token, f"{subject}にはすぐにもらえる教材があります。\nもらいたい教材を一覧から選んでください。\n一覧にない場合は、教材名をチャットで送信してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                             return "OK"
                         
                     else:
-                        reply_message(reply_token, "教科が見つかりませんでした。", show_cancel=True)
+                        reply_message(reply_token, "指定された教科は見つかりませんでした。", show_cancel=True)
                         return "OK"
                 
                 elif service_status == "waiting_print_number":
@@ -348,8 +349,11 @@ def callback():
                         print_number = text.strip()
 
                         if print_number not in prints[subject]:
-                            reply_message(reply_token, "指定されたプリントは見つかりませんでした。", show_cancel=True)
+                            reply_message(reply_token, f"{print_number}は手動での対応となります。\n担当者へお繋ぎしますか？", show_confirm=True, show_cancel=True)
+                            users[user_id]["service_status"] = "waiting_confirm"
+                            save_users(users)
                             return "OK"
+                        
                             
                         else:
                             image_path = prints[subject][print_number]
@@ -361,6 +365,20 @@ def callback():
                             users[user_id].pop("print_page", None)
                             save_users(users)
                             return "OK"
+                        
+                elif service_status == "waiting_confirm":
+                    if text == "続ける":
+                        reply_message(reply_token, "担当者におつなぎします。\n返信までしばらくお待ちください。", show_cancel=True)
+
+                    elif text == "キャンセル":
+                        reply_message(reply_token, "キャンセルしました。")
+                        users[user_id]["service_status"] = "None",
+                        users[user_id]["current_subject"] = "None"
+                        save_users(users)
+                        return "OK"
+                    
+                    else:
+                        reply_message(reply_token, "")
                         
                 elif service_status == "done":
                     if text == "終了する":
@@ -384,6 +402,8 @@ def callback():
                         return "OK"
                     
                     else:
+                        users[user_id]["service_status"] = "None"
+                        users[user_id]["current_subject"] = "None"
                         return "OK"
 
                             
@@ -391,7 +411,7 @@ def callback():
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
                 return "OK"
 
-def reply_message(reply_token, text, show_cancel=False, show_class=False, show_print_numbers=False, show_subjects=False, show_end=False, user_id = None):
+def reply_message(reply_token, text, show_cancel=False, show_class=False, show_print_numbers=False, show_subjects=False, show_end=False, show_confirm=False, user_id = None):
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
@@ -435,6 +455,16 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
                     "text": subject
                 }
             })
+
+    if show_confirm:
+        items.append({
+            "type": "action",
+            "action": {
+                "type": "message",
+                "message": "続ける",
+                "text": "続ける"
+            }
+        })
 
     if show_print_numbers:
         prints = load_prints()
