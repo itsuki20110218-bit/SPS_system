@@ -12,9 +12,11 @@ CHANNEL_ACCESS_TOKEN = "KR7Sclg6pbBPdSFHkwyz3czQpCKOzP6ppszkWFROU8kvM0QdV7XaQ6A7
 USER_FILE = "users.json"
 PRINT_FILE = "prints.json"
 ADMIN_IDS = [
-    "U4eb36bd4d473ed9db5848631fbb6c47d"
+    "U4eb36bd4d473ed9db5848631fbb6c47d",
+    "Ue7081ca5b49a297b2bf0c359726da764"
     ]
 
+classes = ["A", "B", "C", "D"]
 all_subjects = ["国語", "数学", "理科", "公民", "英語"]
 
 def load_users():
@@ -250,22 +252,22 @@ def callback():
                 return "OK"
             
             elif register_status == "waiting_name":
-                if text == "サービスを利用":
-                    reply_message(reply_token, "本名を送信してください。")
+                if text in ["もらう", "その他"] or len(text) > 6 or len(text) <= 2:
+                    reply_message(reply_token, f'"{text}"は登録できません。本名の送信をお願いします。')
                     return "OK"
                 else:
-                    reply_message(reply_token, "本名を登録しました。次にクラスを送信してください。")
+                    reply_message(reply_token, "本名を登録しました。次にクラスを送信してください。", show_class=True)
                     users[user_id]["register_status"] = "waiting_class"
                     users[user_id]["name"] = text
                     save_users(users)
                     return "OK"
                 
             elif register_status == "waiting_class":
-                if text not in ["A", "B", "C", "D"]:
+                if text not in classes:
                     reply_message(reply_token, "正しいクラスを送信してください。")
                     return "OK"
                 else:
-                    reply_message(reply_token, "ユーザー情報の登録が完了しました。")
+                    reply_message(reply_token, "ユーザー情報の登録ができました。\n教材をもらうには、下部のメニューから「もらう」をタップしてください。")
                     users[user_id]["register_status"] = "registered"
                     users[user_id]["class"] = text
                     if is_admin(user_id):
@@ -291,7 +293,7 @@ def callback():
                     return "OK"
                 
                 elif service_status == "None":
-                    if text == "サービスを利用":
+                    if text == "もらう":
                         reply_message(reply_token, "科目を選択してください。", show_cancel=True, show_subjects=True)
                         users[user_id]["service_status"] = "waiting_subject"
                         save_users(users)
@@ -375,6 +377,12 @@ def callback():
                         save_users(users)
                         return "OK"
                     
+                    if text == "もらう":
+                        reply_message(reply_token, "科目を選択してください。", show_cancel=True, show_subjects=True)
+                        users[user_id]["service_status"] = "waiting_subject"
+                        save_users(users)
+                        return "OK"
+                    
                     else:
                         return "OK"
 
@@ -383,7 +391,7 @@ def callback():
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
                 return "OK"
 
-def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False, show_subjects=False, show_end=False, user_id = None):
+def reply_message(reply_token, text, show_cancel=False, show_class=False, show_print_numbers=False, show_subjects=False, show_end=False, user_id = None):
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
@@ -395,6 +403,17 @@ def reply_message(reply_token, text, show_cancel=False, show_print_numbers=False
         }
         
     items = []
+    if show_class:
+        for i in classes:
+            items.append({
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": i,
+                    "text": i
+                }
+            })
+        
     if show_end:
         items.append({
             "type": "action",
