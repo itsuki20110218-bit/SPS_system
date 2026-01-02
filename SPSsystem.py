@@ -369,9 +369,9 @@ def callback():
                 elif service_status == "waiting_confirm":
                     if text == "続ける":
                         reply_message(reply_token, "担当者におつなぎします。\n返信までしばらくお待ちください。", show_cancel=True)
-                        users[user_id]["service_status"] = "done",
+                        users[user_id]["service_status"] = "done"
                         users[user_id]["current_subject"] = "None"
-                        save_users(user_id)
+                        save_users(users)
                         return "OK"
 
                     elif text == "キャンセル":
@@ -406,7 +406,7 @@ def callback():
                         save_users(users)
                         return "OK"
                     
-                    if text == "もらう":
+                    elif text == "もらう":
                         reply_message(reply_token, "科目を選択してください。", show_cancel=True, show_subjects=True)
                         users[user_id]["service_status"] = "waiting_subject"
                         save_users(users)
