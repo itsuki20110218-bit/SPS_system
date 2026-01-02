@@ -286,7 +286,7 @@ def callback():
                     return "OK"
 
                 elif text == "キャンセル" and service_status != "None":
-                    reply_message(reply_token, "サービス利用をキャンセルしました。")
+                    reply_message(reply_token, "キャンセルしました。")
                     users[user_id]["service_status"] = "None"
                     users[user_id]["current_subject"] = "None"
                     users[user_id].pop("print_page", None)
@@ -376,7 +376,7 @@ def callback():
 
                     elif text == "キャンセル":
                         reply_message(reply_token, "キャンセルしました。")
-                        users[user_id]["service_status"] = "None",
+                        users[user_id]["service_status"] = "None"
                         users[user_id]["current_subject"] = "None"
                         save_users(users)
                         return "OK"
@@ -396,6 +396,13 @@ def callback():
                         subject = users[user_id]["current_subject"]
                         reply_message(reply_token, f"{subject}を続けて取得します。\nご希望の教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                         users[user_id]["service_status"] = "waiting_print_number"
+                        save_users(users)
+                        return "OK"
+                    
+                    elif text =="キャンセル":
+                        reply_message(reply_token, "キャンセルしました。")
+                        users[user_id]["service_status"] = "None"
+                        users[user_id]["current_subject"] = "None"
                         save_users(users)
                         return "OK"
                     
