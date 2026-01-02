@@ -298,8 +298,8 @@ def callback():
                     return "OK"
                 
                 elif service_status == "None":
+                    name = users[user_id]["name"]
                     if text == "もらう":
-                        name = users[user_id]["name"]
                         reply_message(reply_token, f"こんにちは、{name}さん。\nご希望の科目を選択してください。", show_cancel=True, show_subjects=True)
                         users[user_id]["service_status"] = "waiting_subject"
                         save_users(users)
@@ -310,7 +310,7 @@ def callback():
                         return "OK"
                     
                     else:
-                        reply_message(reply_token, "こんにちは、" + users[user_id]["name"] + "さん。\n サービスを利用する際は、画面下部の「サービスを利用」ボタンをタップしてください。")
+                        reply_message(reply_token, f"こんにちは、{name}さん。\nSPSを利用するには、下部のメニューから「もらう」をタップしてください。")
                         return "OK"
                         
 
@@ -327,7 +327,7 @@ def callback():
                             users[user_id]["current_subject"] = subject
                             users[user_id]["print_page"] = 0
                             save_users(users)
-                            reply_message(reply_token, f"{subject}にはすぐにもらえる教材があります。ご希望の教材が一覧にない場合は、教材名をチャットで送信してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                            reply_message(reply_token, f"{subject}にはすぐにもらえる教材があります。\nご希望の教材が一覧にない場合は、教材名をチャットで送信してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                             return "OK"
                         
                     else:
