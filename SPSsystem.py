@@ -313,8 +313,8 @@ def callback():
                     subject = text.strip()
                     if subject in all_subjects:
                         if subject not in prints:
-                            reply_message(reply_token, "自動送信が可能な教材がありません。\n担当者が返信しますので、ご希望の教材を送信してお待ちください。", show_cancel=True)
-                            users[user_id]["service_status"] = "done"
+                            reply_message(reply_token, f"{subject}は手動での対応となります。\n担当者へお繋ぎしますか？", show_confirm=True, show_cancel=True)
+                            users[user_id]["service_status"] = "waiting_confirm"
                             save_users(users)
                             return "OK"
                         else:
@@ -322,11 +322,11 @@ def callback():
                             users[user_id]["current_subject"] = subject
                             users[user_id]["print_page"] = 0
                             save_users(users)
-                            reply_message(reply_token, f"{subject}にはすぐにもらえる教材があります。\nもらいたい教材を一覧から選んでください。\n一覧にない場合は、教材名をチャットで送信してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                            reply_message(reply_token, f"{subject}にはすぐにもらえる教材があります。ご希望の教材が一覧にない場合は、教材名をチャットで送信してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                             return "OK"
                         
                     else:
-                        reply_message(reply_token, "指定された教科は見つかりませんでした。", show_cancel=True)
+                        reply_message(reply_token, f"指定された教科は見つかりませんでした。", show_cancel=True, show_subjects=True)
                         return "OK"
                 
                 elif service_status == "waiting_print_number":
