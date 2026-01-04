@@ -327,7 +327,7 @@ def callback():
                             users[user_id]["current_subject"] = subject
                             users[user_id]["print_page"] = 0
                             save_users(users)
-                            reply_message(reply_token, f"ご希望の教材を一覧から選択してください。\n一覧にない場合は、教材名をチャットで送信してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                            reply_message(reply_token, f"ご希望の教材を一覧から選択してください。\n一覧にない場合は手動対応となりますので、教材名の送信をお願いします。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                             return "OK"
                         
                     else:
@@ -354,7 +354,7 @@ def callback():
                         print_number = text.strip()
 
                         if print_number not in prints[subject]:
-                            reply_message(reply_token, f"{print_number}は手動での対応となります。\n担当者へおつなぎしますか？", show_confirm=True, show_cancel=True)
+                            reply_message(reply_token, f"{print_number}はデータベースに登録がないため、手動での対応となります。\n担当者へおつなぎしてもよろしいですか？", show_confirm=True, show_cancel=True)
                             users[user_id]["service_status"] = "waiting_confirm"
                             save_users(users)
                             return "OK"
@@ -387,7 +387,7 @@ def callback():
                         return "OK"
                     
                     else:
-                        reply_message(reply_token, "テスト", show_confirm=True, show_cancel=True)
+                        reply_message(reply_token, "ページ下部にスワイプし、「続ける」または「キャンセル」を選択してください。", show_confirm=True, show_cancel=True)
                         return "OK"
                         
                 elif service_status == "done":
@@ -402,7 +402,7 @@ def callback():
                         subject = users[user_id]["current_subject"]
                         reply_message(reply_token, "ご希望の教材を一覧から選択してください。\n一覧にない場合は、教材名をチャットで送信してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                         users[user_id]["service_status"] = "waiting_print_number"
-                        users[user_id]["page"] = 0
+                        users[user_id]["print_page"] = 0
                         save_users(users)
                         return "OK"
                     
