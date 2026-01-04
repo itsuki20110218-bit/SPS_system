@@ -256,12 +256,12 @@ def callback():
             
             elif register_status == "waiting_name":
                 if text in ["もらう", "その他"] or len(text) > 6 or len(text) <= 2:
-                    reply_message(reply_token, f'"{text}"は登録できません。本名の送信をお願いします。')
+                    reply_message(reply_token, f'"{text}"は登録できません。\n本名の送信をお願いします。')
                     return "OK"
                 
                 else:
                     name = text.strip()
-                    reply_message(reply_token, f"ありがとうございます。次に{name}さんのクラスを選択してください。", show_class=True)
+                    reply_message(reply_token, f"ありがとうございます。\n次に{name}さんのクラスを選択してください。", show_class=True)
                     users[user_id]["register_status"] = "waiting_class"
                     users[user_id]["name"] = name
                     save_users(users)
@@ -327,7 +327,7 @@ def callback():
                             users[user_id]["current_subject"] = subject
                             users[user_id]["print_page"] = 0
                             save_users(users)
-                            reply_message(reply_token, f"{subject}にはすぐにもらえる教材があります。\nご希望の教材が一覧にない場合は、教材名をチャットで送信してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                            reply_message(reply_token, f"ご希望の教材を一覧から選択してください。\n一覧にない場合は、教材名をチャットで送信してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                             return "OK"
                         
                     else:
@@ -354,7 +354,7 @@ def callback():
                         print_number = text.strip()
 
                         if print_number not in prints[subject]:
-                            reply_message(reply_token, f"{print_number}は手動での対応となります。\n担当者へお繋ぎしますか？", show_confirm=True, show_cancel=True)
+                            reply_message(reply_token, f"{print_number}は手動での対応となります。\n担当者へおつなぎしますか？", show_confirm=True, show_cancel=True)
                             users[user_id]["service_status"] = "waiting_confirm"
                             save_users(users)
                             return "OK"
@@ -387,7 +387,7 @@ def callback():
                         return "OK"
                     
                     else:
-                        reply_message(reply_token, "")
+                        reply_message(reply_token, "", show_confirm=True, show_cancel=True)
                         
                 elif service_status == "done":
                     if text == "終了する":
@@ -399,8 +399,9 @@ def callback():
 
                     elif text == "続ける":
                         subject = users[user_id]["current_subject"]
-                        reply_message(reply_token, f"{subject}を続けて取得します。\nご希望の教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                        reply_message(reply_token, "ご希望の教材を一覧から選択してください。\n一覧にない場合は、教材名をチャットで送信してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                         users[user_id]["service_status"] = "waiting_print_number"
+                        users[user_id]["page"] = 0
                         save_users(users)
                         return "OK"
                     
