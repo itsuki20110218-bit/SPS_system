@@ -387,7 +387,7 @@ def callback():
                         return "OK"
                     
                     else:
-                        reply_message(reply_token, "", show_confirm=True, show_cancel=True)
+                        reply_message(reply_token, " ", show_confirm=True, show_cancel=True)
                         return "OK"
                         
                 elif service_status == "done":
