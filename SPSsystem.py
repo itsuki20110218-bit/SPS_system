@@ -388,6 +388,7 @@ def callback():
                     
                     else:
                         reply_message(reply_token, "", show_confirm=True, show_cancel=True)
+                        return "OK"
                         
                 elif service_status == "done":
                     if text == "終了する":
