@@ -25,7 +25,6 @@ def load_users():
     with open(USER_FILE, "r", encoding= "utf-8") as f: #fとして開く（省略）
         return json.load(f)
 
-
 def add_users(user_id): # ユーザー情報を追加
     users = load_users()
     users[user_id] = {
@@ -35,7 +34,8 @@ def add_users(user_id): # ユーザー情報を追加
         "service_status": "None",
         "current_subject": "None",
         "mode": "user",
-        "admin_status": "-"
+        "admin_status": "-",
+        "violation": 0
     }
     with open(USER_FILE, "w", encoding= "utf-8") as f:
         json.dump(users, f, ensure_ascii= False, indent= 2)
@@ -91,7 +91,6 @@ def callback():
             text = event["message"]["text"]
         else:
             text = None
-
 
         if user_id not in users:
             reply_message(reply_token, "はじめまして。初回利用のため、ユーザー情報を登録します。\n本名を送信してください。")
@@ -247,29 +246,59 @@ def callback():
             service_status = users[user_id]["service_status"]
             subject = users[user_id]["current_subject"]
 
-            if text == "モード切り替え" and is_admin(user_id): # 管理モードに切り替え
+            if text == "モード切り替え" and is_admin(user_id): #管理モードに切り替え
                 reply_message(reply_token, "管理モードに切り替えました。")
                 users[user_id]["admin_status"] = "ready"
                 users[user_id]["mode"] = "admin"
                 save_users(users)
                 return "OK"
             
+            if users[user_id]["violation"] in [3, 6]:
+                reply_message(reply_token, f"警告：無効な操作の合計回数が{users[user_id]['violation']}に達しました。\nプログラムの故障に繋がる可能性がありますので、これらの行為はお控えください。\n繰り返した場合には、ユーザー登録を再度行っていただきますのでご了承ください。")
+                return "OK"
+            
+            if users[user_id]["violation"] >= 8:
+                reply_message(reply_token, "申し訳ありませんが、現在、あなたはSPSを利用できない状態です。")
+                return "OK"
+
             elif register_status == "waiting_name":
-                if text in ["もらう", "その他"] or len(text) > 6 or len(text) <= 2:
+                if text in ["もらう", "その他"] or len(text) > 6 or len(text) <= 2 or text == None:
                     reply_message(reply_token, f'"{text}"は登録できません。\n本名の送信をお願いします。')
+                    users[user_id]["violation"] += 1
+                    save_users(users)
                     return "OK"
                 
                 else:
                     name = text.strip()
-                    reply_message(reply_token, f"ありがとうございます。\n次に{name}さんのクラスを選択してください。", show_class=True)
-                    users[user_id]["register_status"] = "waiting_class"
+                    reply_message(reply_token, f"{name}さんでよろしいですか？", show_confirm=True)
+                    users[user_id]["register_status"] = "waiting_comfirm" #service_statusではない
                     users[user_id]["name"] = name
+                    save_users(users)
+                    return "OK"
+                
+            elif register_status == "waiting_comfirm":
+                if text == "はい":
+                    name = users[user_id]["name"]
+                    reply_message(reply_token, f"ありがとうございます。次に{name}さんのクラスを選択してください。", show_class=True)
+                    return "OK"
+                
+                elif text == "いいえ":
+                    reply_message(reply_token, "本名の送信をお願いします。")
+                    users[user_id]["register_status"] = "waiting_name"
+                    users[user_id]["name"] = "unknown"
+                    return "OK"
+                
+                else:
+                    reply_message(reply_token, "無効な操作です。\nトーク画面の最下部までスワイプし、「はい」または「いいえ」の選択をお願いします。", show_confirm=True)
+                    users[user_id]["violation"] += 1
                     save_users(users)
                     return "OK"
                 
             elif register_status == "waiting_class":
                 if text not in classes:
-                    reply_message(reply_token, "正しいクラスを送信してください。")
+                    reply_message(reply_token, "指定されたクラスは見つかりませんでした。\nトーク画面の最下部までスワイプし、一覧からの選択をお願いします。", show_class=True)
+                    users[user_id]["violation"] += 1
+                    save_users(users)
                     return "OK"
                 else:
                     reply_message(reply_token, "ご協力ありがとうございました。以上で初期設定は完了です。\nSPSを利用するには、下部のメニューから「もらう」をタップしてください。")
@@ -331,7 +360,9 @@ def callback():
                             return "OK"
                         
                     else:
-                        reply_message(reply_token, f"指定された科目は見つかりませんでした。\n下部の一覧から選択してください。", show_cancel=True, show_subjects=True)
+                        reply_message(reply_token, f"指定された科目は見つかりませんでした。\nトーク画面の最下部までスワイプし、科目一覧からの選択をお願いします。", show_cancel=True, show_subjects=True)
+                        users[user_id]["violation"] += 1
+                        save_users(users)
                         return "OK"
                 
                 elif service_status == "waiting_print_number":
@@ -347,15 +378,16 @@ def callback():
                             else:
                                 users[user_id]["print_page"] += 1
                                 save_users(users)
-                                reply_message(reply_token, "次を表示します。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                                reply_message(reply_token, f"（{users[user_id]['print_page'] +1}/{max_page +1} ）\n一覧にない場合は手動対応となりますので、教材名の送信をお願いします。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                                 return "OK"
 
 
                         print_number = text.strip()
 
                         if print_number not in prints[subject]:
-                            reply_message(reply_token, f"{print_number}はデータベースに登録がないため、手動での対応となります。\n担当者へおつなぎしてもよろしいですか？", show_confirm=True, show_cancel=True)
+                            reply_message(reply_token, f'"{print_number}"は、担当者による手動での対応となります。\nよろしいですか？', show_confirm=True, show_cancel=True)
                             users[user_id]["service_status"] = "waiting_confirm"
+                            users[user_id].pop("print_page", None)
                             save_users(users)
                             return "OK"
                         
@@ -372,14 +404,14 @@ def callback():
                             return "OK"
                         
                 elif service_status == "waiting_confirm":
-                    if text == "続ける":
+                    if text == "はい":
                         reply_message(reply_token, "担当者におつなぎします。\n返信までしばらくお待ちください。", show_cancel=True)
                         users[user_id]["service_status"] = "done"
                         users[user_id]["current_subject"] = "None"
                         save_users(users)
                         return "OK"
 
-                    elif text == "キャンセル":
+                    elif text == "いいえ":
                         reply_message(reply_token, "キャンセルしました。")
                         users[user_id]["service_status"] = "None"
                         users[user_id]["current_subject"] = "None"
@@ -387,7 +419,9 @@ def callback():
                         return "OK"
                     
                     else:
-                        reply_message(reply_token, "ページ下部にスワイプし、「続ける」または「キャンセル」を選択してください。", show_confirm=True, show_cancel=True)
+                        reply_message(reply_token, "無効な操作です。\nトーク画面の最下部までスワイプし、「はい」または「いいえ」の選択をお願いします。", show_confirm=True)
+                        users[user_id]["violation"] += 1
+                        save_users(users)
                         return "OK"
                         
                 elif service_status == "done":
@@ -476,14 +510,24 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
             })
 
     if show_confirm:
-        items.append({
-            "type": "action",
-            "action": {
-                "type": "message",
-                "label": "続ける",
-                "text": "続ける"
+        items = [
+            {
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": "はい",
+                    "text": "はい"
+                }
+            },
+            {
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": "いいえ",
+                    "text": "いいえ"
+                }
             }
-        })
+        ]
 
     if show_print_numbers:
         prints = load_prints()
@@ -564,7 +608,7 @@ def reply_image(reply_token, image_url, subject, print_number):
                             "type": "action",
                             "action": {
                                 "type": "message",
-                                "label": f"{subject}の取得を続ける",
+                                "label": f"続けて{subject}の教材をもらう",
                                 "text": "続ける"
                             }
                         },
