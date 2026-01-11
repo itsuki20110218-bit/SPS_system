@@ -279,7 +279,7 @@ def callback():
             elif register_status == "waiting_comfirm":
                 if text == "はい":
                     name = users[user_id]["name"]
-                    reply_message(reply_token, f"ありがとうございます。次に{name}さんのクラスを選択してください。", show_class=True)
+                    reply_message(reply_token, f"ありがとうございます。\n次に{name}さんのクラスを選択してください。", show_class=True)
                     users[user_id]["register_status"] = "waiting_class"
                     save_users(users)
                     return "OK"
@@ -344,6 +344,12 @@ def callback():
                         save_users(users)
                         return "OK"
                     
+                    elif text == "お問い合わせ":
+                        reply_message(reply_token, "お問い合わせは、担当者による手動の対応となります。\nよろしいですか？", show_confirm=True)
+                        users[user_id]["service_status"] = "waiting_confirm"
+                        save_users(users)
+                        return "OK"
+                    
                     else:
                         reply_message(reply_token, f"こんにちは、{name}さん。\nSPSを利用するには、下部のメニューから「もらう」をタップしてください。")
                         return "OK"
@@ -353,10 +359,11 @@ def callback():
                     subject = text.strip()
                     if subject in all_subjects:
                         if subject not in prints:
-                            reply_message(reply_token, f"{subject}は手動での対応となります。\n担当者へお繋ぎしますか？", show_confirm=True)
+                            reply_message(reply_token, f"{subject}は手動での対応となります。\nよろしいですか？", show_confirm=True)
                             users[user_id]["service_status"] = "waiting_confirm"
                             save_users(users)
                             return "OK"
+                        
                         else:
                             users[user_id]["service_status"] = "waiting_print_number"
                             users[user_id]["current_subject"] = subject
@@ -461,9 +468,17 @@ def callback():
                         save_users(users)
                         return "OK"
                     
+                    elif text == "その他":
+                        reply_message(reply_token, "操作を一覧から選択してください。", show_others=True)
+                        users[user_id]["service_status"] = "None"
+                        users[user_id]["current_subject"] = "None"
+                        save_users(users)
+                        return "OK"
+                    
                     else:
                         users[user_id]["service_status"] = "None"
                         users[user_id]["current_subject"] = "None"
+                        save_users(users)
                         return "OK"
 
                             
@@ -542,8 +557,16 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
                 "type": "action",
                 "action": {
                     "type": "message",
-                    "label": "名前・クラスの再設定",
+                    "label": "ユーザー情報の再設定",
                     "text": "ユーザー情報の再設定"
+                }
+            },
+            {
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": "お問い合わせ",
+                    "text": "お問い合わせ"
                 }
             }
         ]
