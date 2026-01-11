@@ -315,12 +315,9 @@ def callback():
                     return "OK"
 
             elif register_status == "registered":
-                if text == "ユーザー情報を再設定":
-                    reply_message(reply_token, "ユーザー情報を再設定します。\n本名を送信してください。")
-                    users[user_id]["register_status"] = "waiting_name"
-                    save_users(users)
+                if text == None:
                     return "OK"
-
+                
                 elif text == "キャンセル" and service_status != "None":
                     reply_message(reply_token, "キャンセルしました。")
                     users[user_id]["service_status"] = "None"
@@ -338,7 +335,13 @@ def callback():
                         return "OK"
                     
                     elif text == "その他":
-                        reply_message(reply_token, "メッセージありがとうございます。\nこの機能は現在開発中です。\n申し訳ありませんが、正式なリリースまでもうしばらくお待ちください。")
+                        reply_message(reply_token, "ご希望の操作を一覧から選択してください。", show_others=True)
+                        return "OK"
+                    
+                    elif text == "ユーザー情報の再設定":
+                        reply_message(reply_token, "ユーザー情報を再設定します。\n本名を送信してください。")
+                        users[user_id]["register_status"] = "waiting_name"
+                        save_users(users)
                         return "OK"
                     
                     else:
@@ -453,6 +456,7 @@ def callback():
                     elif text == "もらう":
                         name = users[user_id]["name"]
                         reply_message(reply_token, f"こんにちは、{name}さん。\nご希望の科目を選択してください。", show_cancel=True, show_subjects=True)
+                        users[user_id]["current_subject"] = "None"
                         users[user_id]["service_status"] = "waiting_subject"
                         save_users(users)
                         return "OK"
@@ -467,7 +471,7 @@ def callback():
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
                 return "OK"
 
-def reply_message(reply_token, text, show_cancel=False, show_class=False, show_print_numbers=False, show_subjects=False, show_end=False, show_confirm=False, user_id = None):
+def reply_message(reply_token, text, show_cancel=False, show_class=False, show_print_numbers=False, show_subjects=False, show_end=False, show_confirm=False, show_others=False, user_id=None):
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
@@ -528,6 +532,18 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
                     "type": "message",
                     "label": "いいえ",
                     "text": "いいえ"
+                }
+            }
+        ]
+
+    if show_others:
+        items = [
+            {
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": "名前・クラスの再設定",
+                    "text": "ユーザー情報の再設定"
                 }
             }
         ]
