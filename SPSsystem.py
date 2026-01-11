@@ -253,11 +253,13 @@ def callback():
                 save_users(users)
                 return "OK"
             
-            if users[user_id]["violation"] == 3 or users[user_id]["violation"] == 5:
+            if users[user_id]["violation"] == 5:
                 reply_message(reply_token, f"警告：無効な操作の合計回数が{users[user_id]['violation']}に達しました。\nプログラムの故障に繋がる可能性がありますので、これらの行為はお控えください。\n繰り返した場合には、ユーザー登録を再度行っていただきますのでご了承ください。")
+                users[user_id]["violation"] += 1
+                save_users(users)
                 return "OK"
             
-            if users[user_id]["violation"] >= 8:
+            if users[user_id]["violation"] >= 10:
                 reply_message(reply_token, "申し訳ありませんが、現在、あなたはSPSを利用できない状態です。")
                 return "OK"
 
