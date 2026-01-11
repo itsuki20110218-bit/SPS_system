@@ -253,7 +253,7 @@ def callback():
                 save_users(users)
                 return "OK"
             
-            if users[user_id]["violation"] in [3, 6]:
+            if users[user_id]["violation"] == 3 or users[user_id]["violation"] == 5:
                 reply_message(reply_token, f"警告：無効な操作の合計回数が{users[user_id]['violation']}に達しました。\nプログラムの故障に繋がる可能性がありますので、これらの行為はお控えください。\n繰り返した場合には、ユーザー登録を再度行っていただきますのでご了承ください。")
                 return "OK"
             
@@ -280,12 +280,15 @@ def callback():
                 if text == "はい":
                     name = users[user_id]["name"]
                     reply_message(reply_token, f"ありがとうございます。次に{name}さんのクラスを選択してください。", show_class=True)
+                    users[user_id]["register_status"] = "waiting_class"
+                    save_users(users)
                     return "OK"
                 
                 elif text == "いいえ":
                     reply_message(reply_token, "本名の送信をお願いします。")
                     users[user_id]["register_status"] = "waiting_name"
                     users[user_id]["name"] = "unknown"
+                    save_users(users)
                     return "OK"
                 
                 else:
@@ -347,7 +350,7 @@ def callback():
                     subject = text.strip()
                     if subject in all_subjects:
                         if subject not in prints:
-                            reply_message(reply_token, f"{subject}は手動での対応となります。\n担当者へお繋ぎしますか？", show_confirm=True, show_cancel=True)
+                            reply_message(reply_token, f"{subject}は手動での対応となります。\n担当者へお繋ぎしますか？", show_confirm=True)
                             users[user_id]["service_status"] = "waiting_confirm"
                             save_users(users)
                             return "OK"
