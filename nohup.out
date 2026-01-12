@@ -1,0 +1,2 @@
+usage: gunicorn [OPTIONS] [APP_MODULE]
+gunicorn: error: unrecognized arguments: --blind 127.0.0.1:5000 gunicorn.log
