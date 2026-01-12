@@ -728,18 +728,30 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         ]
 
     if show_categories:
+        prints = load_prints()
         users = load_users()
-        subject = users(user_id)("current_subject")
-        all_categories = list(prints.get(subject, {}.keys()))
-        for category in all_categories:
-            items.append({
-                "type": "action",
-                "action": {
-                    "type": "message",
-                    "label": category,
-                    "text": category
-                }
-            })
+
+        # 管理者か通常ユーザーかで参照する科目を分ける
+        if users[user_id]["mode"] == "admin":
+            subject = users[user_id].get("admin_current_subject")
+        else:
+            subject = users[user_id].get("current_subject")
+
+        # 科目が存在しない場合は何もしない
+        if subject not in prints:
+            pass
+        else:
+            categories = prints[subject].keys()
+
+            for category in categories:
+                items.append({
+                    "type": "action",
+                    "action": {
+                        "type": "message",
+                        "label": category,
+                        "text": category
+                    }
+                })
 
     if show_print_numbers:
         prints = load_prints()
