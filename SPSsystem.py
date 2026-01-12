@@ -13,8 +13,10 @@ USER_FILE = "users.json"
 PRINT_FILE = "prints.json"
 ADMIN_IDS = [
     "U4eb36bd4d473ed9db5848631fbb6c47d",
-    "Ue7081ca5b49a297b2bf0c359726da764"
+    "Ue7081ca5b49a297b2bf0c359726da764",
+    "U6f5ec5cc7478c41c74ad8a8b0e522302"
     ]
+#ADMIN_IDS = "admin_ids.json"
 
 classes = ["A", "B", "C", "D"]
 all_subjects = ["国語", "数学", "理科", "公民", "英語"]
