@@ -201,7 +201,7 @@ def callback():
             
             elif admin_status == "waiting_edit_subject":
                 subject = text.strip()
-                if subject not in all_subjects:
+                if subject not in prints:
                     reply_message(reply_token, "指定された科目は存在しません。")
                     users[user_id]["admin_status"] = "ready"
                     save_users(users)
@@ -218,15 +218,7 @@ def callback():
             elif admin_status == "waiting_edit_print":
                 subject = users[user_id]["admin_current_subject"]
                 print_number = text.strip()
-                if print_number not in prints[subject]:
-                    reply_message(reply_token, "指定された教材は存在しません。")
-                    users[user_id]["admin_status"] = "ready"
-                    users[user_id].pop("admin_current_subject", None)
-                    users[user_id].pop("print_page", None)
-                    save_users(users)
-                    return "OK"
-                
-                elif text == "次へ":
+                if text == "次へ":
                     all_numbers = list(prints[subject].keys())
                     max_page = (len(all_numbers) - 1)// 11
                     if max_page <= users[user_id]["print_page"]:
@@ -237,6 +229,15 @@ def callback():
                         save_users(users)
                         reply_message(reply_token, "次を表示します。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                         return "OK"
+                
+                elif print_number not in prints[subject]:
+                    reply_message(reply_token, "指定された教材は存在しません。")
+                    users[user_id]["admin_status"] = "ready"
+                    users[user_id].pop("admin_current_subject", None)
+                    users[user_id].pop("print_page", None)
+                    save_users(users)
+                    return "OK"
+                
                     
                 else:
                     reply_message(reply_token, "指定した教材の新しい名称を送信して下さい。", show_cancel=True)
