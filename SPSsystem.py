@@ -299,10 +299,7 @@ def callback():
                 users[user_id]["admin_status"] = "waiting_print_number"
                 users[user_id]["admin_current_subject"] = subject
                 save_users(users)
-<<<<<<< HEAD
                 reply_message(reply_token, "教材名を送信してください。", show_cancel=True)
-=======
->>>>>>> parent of f156ea4 (カテゴリ追加（β）)
                 return "OK"
             
             elif admin_status == "waiting_print_number":
@@ -462,7 +459,6 @@ def callback():
                         
                         else:
 <<<<<<< HEAD
-<<<<<<< HEAD
                             reply_message(reply_token, f"カテゴリを選択してください。", show_cancel=True, show_categories=True)
                             users[user_id]["service_status"] = "waiting_category"
 =======
@@ -473,13 +469,6 @@ def callback():
                             save_users(users)
 <<<<<<< HEAD
 =======
-                            reply_message(reply_token, f"ご希望の教材を一覧から選択してください。\n一覧にない場合は手動対応となりますので、教材名の送信をお願いします。", show_cancel=True, show_print_numbers=True, user_id=user_id)
->>>>>>> parent of f156ea4 (カテゴリ追加（β）)
-=======
-                            users[user_id]["service_status"] = "waiting_print_number"
-                            users[user_id]["current_subject"] = subject
-                            users[user_id]["print_page"] = 0
-                            save_users(users)
                             reply_message(reply_token, f"ご希望の教材を一覧から選択してください。\n一覧にない場合は手動対応となりますので、教材名の送信をお願いします。", show_cancel=True, show_print_numbers=True, user_id=user_id)
 >>>>>>> parent of f156ea4 (カテゴリ追加（β）)
                             return "OK"
@@ -683,7 +672,6 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         ]
 
 <<<<<<< HEAD
-<<<<<<< HEAD
     if show_categories:
         prints = load_prints()
         users = load_users()
@@ -710,8 +698,6 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
                     }
                 })
 
-=======
->>>>>>> parent of f156ea4 (カテゴリ追加（β）)
 =======
 >>>>>>> parent of f156ea4 (カテゴリ追加（β）)
     if show_print_numbers:
