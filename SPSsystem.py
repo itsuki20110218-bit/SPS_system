@@ -212,6 +212,7 @@ def callback():
                     users[user_id]["admin_status"] = "waiting_edit_print"
                     users[user_id]["admin_current_subject"] = subject
                     users[user_id]["print_page"] = 0
+                    save_users(users)
                     return "OK"
 
             elif admin_status == "waiting_edit_print":
@@ -222,7 +223,7 @@ def callback():
                     users[user_id]["admin_status"] = "ready"
                     users[user_id].pop("admin_current_subject", None)
                     users[user_id].pop("print_page", None)
-                    save_users()
+                    save_users(users)
                     return "OK"
                 
                 elif text == "次へ":
@@ -233,7 +234,7 @@ def callback():
                     
                     else:
                         users[user_id]["print_page"] += 1
-                        save_users()
+                        save_users(users)
                         reply_message(reply_token, "次を表示します。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                         return "OK"
                     
