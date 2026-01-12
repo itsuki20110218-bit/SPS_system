@@ -105,6 +105,7 @@ def callback():
                 users[user_id].pop("admin_current_subject", None)
                 users[user_id].pop("admin_temp_image", None)
                 users[user_id].pop("print_page", None)
+                users[user_id].pop("current_print_number", None)
                 save_users(users)
                 reply_message(reply_token, "キャンセルしました。")
                 return "OK"
@@ -124,15 +125,21 @@ def callback():
                     return "OK"
                 
                 elif text == "その他":
-                    reply_message(reply_token, "削除する教材の教科を選択してください。", show_cancel=True, show_subjects=True)
+                    reply_message(reply_token, "削除する教材の科目を選択してください。", show_cancel=True, show_subjects=True)
                     users[user_id]["admin_status"] = "waiting_delete_subject"
+                    save_users(users)
+                    return "OK"
+                
+                else:
+                    reply_message(reply_token, "編集する教材の科目を選択してください。", show_cancel=True, show_subjects=True)
+                    users[user_id]["admin_status"] = "waiting_edit_subject"
                     save_users(users)
                     return "OK"
             
             elif admin_status == "waiting_delete_subject":
                 subject = text.strip()
                 if subject not in prints:
-                    reply_message(reply_token, "指定された教科は存在しません。")
+                    reply_message(reply_token, "指定された科目は存在しません。")
                     users[user_id]["admin_status"] = "ready"
                     save_users(users)
                     return "OK"
@@ -186,7 +193,77 @@ def callback():
                 users[user_id].pop("admin_current_subject", None)
                 save_users(users)
                 return "OK"
+            
+            elif admin_status == "waiting_edit_subject":
+                subject = text.strip()
+                if subject not in all_subjects:
+                    reply_message(reply_token, "指定された科目は存在しません。")
+                    users[user_id]["admin_status"] = "ready"
+                    save_users(users)
+                    return "OK"
+                
+                else:
+                    reply_message(reply_token, "教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                    users[user_id]["admin_status"] = "waiting_edit_print"
+                    users[user_id]["admin_current_subject"] = subject
+                    users[user_id]["print_page"] = 0
 
+            elif admin_status == "waiting_edit_print":
+                subject = users[user_id]["admin_current_subject"]
+                print_number = text.strip()
+                if print_number not in prints[subject]:
+                    reply_message(reply_token, "指定された教材は存在しません。")
+                    users[user_id]["admin_status"] = "ready"
+                    users[user_id].pop("admin_current_subject", None)
+                    users[user_id].pop("print_page", None)
+                    save_users()
+                    return "OK"
+                
+                elif text == "次へ":
+                    all_numbers = list(prints[subject].keys())
+                    max_page = (len(all_numbers) - 1)// 11
+                    if max_page <= users[user_id]["print_page"]:
+                        return "OK"
+                    
+                    else:
+                        users[user_id]["print_page"] += 1
+                        save_users()
+                        reply_message(reply_token, "次を表示します。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                        return "OK"
+                    
+                else:
+                    reply_message(reply_token, "指定した教材の新しい名称を送信して下さい。", show_cancel=True)
+                    users[user_id]["admin_status"] = "waiting_new_print_number"
+                    users[user_id]["current_print_number"] = print_number
+                    users[user_id].pop("print_page", None)
+                    save_users(users)
+
+            elif admin_status == "waiting_new_print_number":
+                new_print_number = text.strip()
+                subject = users[user_id]["admin_current_subject"]
+                old_print_number = users[user_id]["current_print_number"]
+                if new_print_number in prints[subject]:
+                    reply_message(reply_token, "すでに存在する名称です。新しい名称を送信してください。", show_cancel=True)
+                    return "OK"
+                
+                else:
+                    old_path = prints[subject][old_print_number]
+                    old_full_path = os.path.join(PUBLIC_HTML, old_path)
+                    new_path = f"prints/{subject}_{new_print_number}.jpg"
+                    new_full_path = os.path.join(PUBLIC_HTML, new_path)
+                    os.rename(old_full_path, new_full_path)
+
+                    prints[subject][new_print_number] = new_path
+                    del prints[subject][old_print_number]
+                    save_prints(prints)
+
+                    users[user_id]["admin_status"] = "ready"
+                    users[user_id].pop("admin_current_subject", None)
+                    users[user_id].pop("current_print_number", None)
+                    save_users(users)
+
+                    reply_message(reply_token, f"{new_print_number}に変更しました。")
+                    return "OK"
 
             elif admin_status == "waiting_image":
                 if message_type == "image":
@@ -220,26 +297,30 @@ def callback():
                 subject = users[user_id]["admin_current_subject"]
                 temp_path = users[user_id]["admin_temp_image"]
 
-                prints_dir = os.path.join(PUBLIC_HTML, "prints")
-                os.makedirs(prints_dir, exist_ok=True)
-                save_path = os.path.join(
-                    prints_dir,
-                    f"{subject}_{print_number}.jpg"
-                )
+                if print_number in prints[subject]:
+                    reply_message(reply_token, "すでに存在する名称です。新しい名称を送信してください。", show_cancel=True)
+                    return "OK"
+                
+                else:
+                    prints_dir = os.path.join(PUBLIC_HTML, "prints")
+                    os.makedirs(prints_dir, exist_ok=True)
+                    save_path = os.path.join(
+                        prints_dir,
+                        f"{subject}_{print_number}.jpg"
+                    )
 
-                os.rename(temp_path, save_path) #ファイルをsave_pathで指定した場所に移動
+                    os.rename(temp_path, save_path) #ファイルをsave_pathで指定した場所に移動
 
-                prints = load_prints()
-                prints.setdefault(subject, {})[print_number] = f"prints/{subject}_{print_number}.jpg"
-                save_prints(prints)
+                    prints.setdefault(subject, {})[print_number] = f"prints/{subject}_{print_number}.jpg"
+                    save_prints(prints)
 
-                users[user_id]["admin_status"] = "ready"
-                users[user_id].pop("admin_current_subject", None)
-                users[user_id].pop("admin_temp_image", None)
-                save_users(users)
+                    users[user_id]["admin_status"] = "ready"
+                    users[user_id].pop("admin_current_subject", None)
+                    users[user_id].pop("admin_temp_image", None)
+                    save_users(users)
 
-                reply_message(reply_token, f"{subject} - {print_number}が正常に登録されました。")
-                return "OK"
+                    reply_message(reply_token, f"{subject} - {print_number}が正常に登録されました。")
+                    return "OK"
 
         else:
             register_status = users[user_id]["register_status"]
@@ -408,9 +489,8 @@ def callback():
                         
                             
                         else:
-                            image_path = prints[subject][print_number]
-                            encoded_path = quote(image_path)
-                            image_url = f"{BASE_URL}/{encoded_path}"
+                            image_path = quote(prints[subject][print_number])
+                            image_url = f"{BASE_URL}/{image_path}"
 
                             reply_image(reply_token, image_url, subject, print_number)
                             users[user_id]["service_status"] = "done"
