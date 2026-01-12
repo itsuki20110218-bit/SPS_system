@@ -505,7 +505,7 @@ def callback():
                             return "OK"
                         
                         else:
-                            reply_message(reply_token, f"カテゴリを選択してください。", show_cancel=True)
+                            reply_message(reply_token, f"カテゴリを選択してください。", show_cancel=True, show_categories=True)
                             users[user_id]["service_status"] = "waiting_category"
                             users[user_id]["current_subject"] = subject
                             save_users(users)
