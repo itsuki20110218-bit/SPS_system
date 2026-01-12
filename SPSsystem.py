@@ -730,21 +730,21 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
     if show_categories:
         prints = load_prints()
         users = load_users()
-        categories = prints.get(subject, {})
+        #categories = prints.get(subject, {})
         if users[user_id]["mode"] == "admin":
             subject = users[user_id].get("admin_current_subject")
         else:
             subject = users[user_id].get("current_subject")
 
-        for category in categories.keys():
-            items.append({
-                "type": "action",
-                "action": {
-                    "type": "message",
-                    "label": category,
-                    "text": category
-                }
-            })
+        
+        items.append({
+            "type": "action",
+            "action": {
+                "type": "message",
+                "label": "category",
+                "text": "category"
+            }
+        })
 
     if show_print_numbers:
         prints = load_prints()
