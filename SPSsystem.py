@@ -728,15 +728,19 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         ]
 
     if show_categories:
-        items.append({
-            "type": "action",
-            "action": {
-                "type": "message",
-                "label": "あ",
-                "text": "あ"
-            }
-        })
-        
+        users = load_users()
+        subject = users(user_id)("current_subject")
+        all_categories = list(prints.get(subject, {}.keys()))
+        for category in all_categories:
+            items.append({
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": category,
+                    "text": category
+                }
+            })
+
     if show_print_numbers:
         prints = load_prints()
         users = load_users()
