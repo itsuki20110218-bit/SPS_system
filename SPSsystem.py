@@ -505,10 +505,10 @@ def callback():
                             return "OK"
                         
                         else:
+                            reply_message(reply_token, f"カテゴリを選択してください。")
                             users[user_id]["service_status"] = "waiting_category"
                             users[user_id]["current_subject"] = subject
                             save_users(users)
-                            reply_message(reply_token, f"カテゴリを選択してください。", show_cancel=True, show_categories=True)
                             return "OK"
                         
                     else:
@@ -730,21 +730,21 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
     if show_categories:
         prints = load_prints()
         users = load_users()
-        #categories = prints.get(subject, {})
+        categories = prints.get(subject, {})
         if users[user_id]["mode"] == "admin":
             subject = users[user_id].get("admin_current_subject")
         else:
             subject = users[user_id].get("current_subject")
 
-        
-        items.append({
-            "type": "action",
-            "action": {
-                "type": "message",
-                "label": "category",
-                "text": "category"
-            }
-        })
+        for category in categories.keys():
+            items.append({
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": category,
+                    "text": category
+                }
+            })
 
     if show_print_numbers:
         prints = load_prints()
