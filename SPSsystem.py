@@ -132,10 +132,13 @@ def callback():
                     save_users(users)
                     return "OK"
                 
-                else:
+                elif text == "編集":
                     reply_message(reply_token, "編集する教材の科目を選択してください。", show_cancel=True, show_subjects=True)
                     users[user_id]["admin_status"] = "waiting_edit_subject"
                     save_users(users)
+                    return "OK"
+                
+                else:
                     return "OK"
             
             elif admin_status == "waiting_delete_subject":
@@ -209,6 +212,7 @@ def callback():
                     users[user_id]["admin_status"] = "waiting_edit_print"
                     users[user_id]["admin_current_subject"] = subject
                     users[user_id]["print_page"] = 0
+                    return "OK"
 
             elif admin_status == "waiting_edit_print":
                 subject = users[user_id]["admin_current_subject"]
@@ -239,6 +243,7 @@ def callback():
                     users[user_id]["current_print_number"] = print_number
                     users[user_id].pop("print_page", None)
                     save_users(users)
+                    return "OK"
 
             elif admin_status == "waiting_new_print_number":
                 new_print_number = text.strip()
