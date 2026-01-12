@@ -208,11 +208,11 @@ def callback():
                     return "OK"
                 
                 else:
+                    reply_message(reply_token, "教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                     users[user_id]["admin_status"] = "waiting_edit_print"
                     users[user_id]["admin_current_subject"] = subject
                     users[user_id]["print_page"] = 0
                     save_users(users)
-                    reply_message(reply_token, "教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                     return "OK"
 
             elif admin_status == "waiting_edit_print":
