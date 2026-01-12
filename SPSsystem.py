@@ -349,6 +349,7 @@ def callback():
                 users[user_id]["admin_status"] = "waiting_print_number"
                 users[user_id]["admin_current_category"] = category
                 save_users(users)
+                reply_message(reply_token, "教材名を送信してください。", show_cancel=True)
                 return "OK"
             
             elif admin_status == "waiting_print_number":
@@ -729,12 +730,13 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
     if show_categories:
         prints = load_prints()
         users = load_users()
+        categories = prints.get(subject, {})
         if users[user_id]["mode"] == "admin":
             subject = users[user_id].get("admin_current_subject")
         else:
             subject = users[user_id].get("current_subject")
 
-        for category in prints[subject].keys():
+        for category in categories.keys():
             items.append({
                 "type": "action",
                 "action": {
