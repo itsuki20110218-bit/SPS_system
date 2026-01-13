@@ -17,7 +17,7 @@ classes = ["A", "B", "C", "D"]
 all_subjects = ["国語", "数学", "理科", "公民", "英語"]
 
 def load_admin_ids():
-    if not os.path.exists(ADMIIN_IDS):
+    if not os.path.exists(ADMIN_IDS):
         return {}
     with open(ADMIN_IDS, "r", encorfing= "utf-8") as l:
         return json.load(l)
