@@ -11,16 +11,14 @@ PUBLIC_HTML = "/home/xs738029/xs738029.xsrv.jp/public_html"
 CHANNEL_ACCESS_TOKEN = "KR7Sclg6pbBPdSFHkwyz3czQpCKOzP6ppszkWFROU8kvM0QdV7XaQ6A7bqDOX27qiZCxBCLA6VWa+Ke85Ekni+Fxwi7vasS9dz4+q5KRVfbIN2uhF2XCSrLaJlsOeQAsnQDUE6O7tFyEZemn72DccAdB04t89/1O/w1cDnyilFU="
 USER_FILE = "users.json"
 PRINT_FILE = "prints.json"
-ADMIN_IDS = "admin_ids.json"
+ADMIN_IDS = [
+  "U4eb36bd4d473ed9db5848631fbb6c47d",
+  "Ue7081ca5b49a297b2bf0c359726da764",
+  "U6f5ec5cc7478c41c74ad8a8b0e522302"
+]
 
 classes = ["A", "B", "C", "D"]
 all_subjects = ["国語", "数学", "理科", "公民", "英語"]
-
-def load_admin_ids():
-    if not os.path.exists(ADMIN_IDS):
-        return {}
-    with open(ADMIN_IDS, "r", encorfing= "utf-8") as l:
-        return json.load(l)
         
 def load_users():
     if not os.path.exists(USER_FILE): 
@@ -83,9 +81,9 @@ def callback():
     for event in data.get("events", []):
 
         if event["type"] != "message":
-            continue
+            return "OK"
 
-        message_type = event["message"]["type"] # ローカル関数にしてるのはeventが来た時に使うから
+        message_type = event["message"]["type"] #ローカル関数にしてるのはeventが来た時に使うから
         reply_token = event["replyToken"]
         user_id = event["source"]["userId"]
         users = load_users()
@@ -459,19 +457,11 @@ def callback():
                             return "OK"
                         
                         else:
-<<<<<<< HEAD
-                            reply_message(reply_token, f"カテゴリを選択してください。", show_cancel=True, show_categories=True)
-                            users[user_id]["service_status"] = "waiting_category"
-=======
                             users[user_id]["service_status"] = "waiting_print_number"
->>>>>>> parent of f156ea4 (カテゴリ追加（β）)
                             users[user_id]["current_subject"] = subject
                             users[user_id]["print_page"] = 0
                             save_users(users)
-<<<<<<< HEAD
-=======
                             reply_message(reply_token, f"ご希望の教材を一覧から選択してください。\n一覧にない場合は手動対応となりますので、教材名の送信をお願いします。", show_cancel=True, show_print_numbers=True, user_id=user_id)
->>>>>>> parent of f156ea4 (カテゴリ追加（β）)
                             return "OK"
                         
                     else:
@@ -671,46 +661,15 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
                 }
             }
         ]
-
-<<<<<<< HEAD
-    if show_categories:
-        prints = load_prints()
-        users = load_users()
-
-        # 管理者か通常ユーザーかで参照する科目を分ける
-        if users[user_id]["mode"] == "admin":
-            subject = users[user_id].get("admin_current_subject")
-        else:
-            subject = users[user_id].get("current_subject")
-
-        # 科目が存在しない場合は何もしない
-        if subject not in prints:
-            pass
-        else:
-            categories = prints[subject].keys()
-
-            for category in categories:
-                items.append({
-                    "type": "action",
-                    "action": {
-                        "type": "message",
-                        "label": category,
-                        "text": category
-                    }
-                })
-
-=======
->>>>>>> parent of f156ea4 (カテゴリ追加（β）)
+    users= load_users()
+    prints = load_prints()
+    subjects = (
+        users[user_id].get("admin_current_subject")
+        if users[user_id]["mode"] == "admin"
+        else users[user_id].get("current_subject")
+    )
     if show_print_numbers:
-        prints = load_prints()
-        users = load_users()
-        if users[user_id]["mode"] == "admin":
-            subjects = users[user_id]["admin_current_subject"]
-        else:
-            subjects = users[user_id]["current_subject"]
-            
         page = users[user_id].get("print_page", 0)
-
         all_numbers = list(prints.get(subjects, {}).keys())
         page_numbers = get_print_numbers_by_page(all_numbers, page)
 
