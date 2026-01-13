@@ -83,9 +83,9 @@ def callback():
     for event in data.get("events", []):
 
         if event["type"] != "message":
-            return "OK"
+            continue
 
-        message_type = event["message"]["type"] #ローカル関数にしてるのはeventが来た時に使うから
+        message_type = event["message"]["type"] # ローカル関数にしてるのはeventが来た時に使うから
         reply_token = event["replyToken"]
         user_id = event["source"]["userId"]
         users = load_users()
@@ -459,11 +459,19 @@ def callback():
                             return "OK"
                         
                         else:
+<<<<<<< HEAD
+                            reply_message(reply_token, f"カテゴリを選択してください。", show_cancel=True, show_categories=True)
+                            users[user_id]["service_status"] = "waiting_category"
+=======
                             users[user_id]["service_status"] = "waiting_print_number"
+>>>>>>> parent of f156ea4 (カテゴリ追加（β）)
                             users[user_id]["current_subject"] = subject
                             users[user_id]["print_page"] = 0
                             save_users(users)
+<<<<<<< HEAD
+=======
                             reply_message(reply_token, f"ご希望の教材を一覧から選択してください。\n一覧にない場合は手動対応となりますので、教材名の送信をお願いします。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+>>>>>>> parent of f156ea4 (カテゴリ追加（β）)
                             return "OK"
                         
                     else:
@@ -663,15 +671,46 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
                 }
             }
         ]
-    users= load_users()
-    prints = load_prints()
-    subjects = (
-        users[user_id].get("admin_current_subject")
-        if users[user_id]["mode"] == "admin"
-        else users[user_id].get("current_subject")
-    )
+
+<<<<<<< HEAD
+    if show_categories:
+        prints = load_prints()
+        users = load_users()
+
+        # 管理者か通常ユーザーかで参照する科目を分ける
+        if users[user_id]["mode"] == "admin":
+            subject = users[user_id].get("admin_current_subject")
+        else:
+            subject = users[user_id].get("current_subject")
+
+        # 科目が存在しない場合は何もしない
+        if subject not in prints:
+            pass
+        else:
+            categories = prints[subject].keys()
+
+            for category in categories:
+                items.append({
+                    "type": "action",
+                    "action": {
+                        "type": "message",
+                        "label": category,
+                        "text": category
+                    }
+                })
+
+=======
+>>>>>>> parent of f156ea4 (カテゴリ追加（β）)
     if show_print_numbers:
+        prints = load_prints()
+        users = load_users()
+        if users[user_id]["mode"] == "admin":
+            subjects = users[user_id]["admin_current_subject"]
+        else:
+            subjects = users[user_id]["current_subject"]
+            
         page = users[user_id].get("print_page", 0)
+
         all_numbers = list(prints.get(subjects, {}).keys())
         page_numbers = get_print_numbers_by_page(all_numbers, page)
 
