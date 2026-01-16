@@ -11,18 +11,20 @@ PUBLIC_HTML = "/home/xs738029/xs738029.xsrv.jp/public_html"
 CHANNEL_ACCESS_TOKEN = "KR7Sclg6pbBPdSFHkwyz3czQpCKOzP6ppszkWFROU8kvM0QdV7XaQ6A7bqDOX27qiZCxBCLA6VWa+Ke85Ekni+Fxwi7vasS9dz4+q5KRVfbIN2uhF2XCSrLaJlsOeQAsnQDUE6O7tFyEZemn72DccAdB04t89/1O/w1cDnyilFU="
 USER_FILE = "users.json"
 PRINT_FILE = "prints.json"
-ADMIN_IDS = [
-  "U4eb36bd4d473ed9db5848631fbb6c47d",
-  "Ue7081ca5b49a297b2bf0c359726da764",
-  "U6f5ec5cc7478c41c74ad8a8b0e522302"
-]
+ADMIN_IDS = "admin_ids.json"
 
 classes = ["A", "B", "C", "D"]
 all_subjects = ["国語", "数学", "理科", "公民", "英語"]
         
+def load_admin_ids():
+    if not os.path.exists(ADMIN_IDS):
+        return "OK"
+    with open(ADMIN_IDS, "r", encoding="utf-8") as f:
+        return json.load(f)
+    
 def load_users():
     if not os.path.exists(USER_FILE): 
-        return {}
+        return []
     with open(USER_FILE, "r", encoding= "utf-8") as f: #fとして開く（省略）
         return json.load(f)
 
@@ -46,7 +48,7 @@ def save_users(users): # ユーザー情報を更新
         json.dump(users, f, ensure_ascii= False, indent= 2)
 
 def is_admin(user_id):
-    return user_id in ADMIN_IDS
+    return user_id in load_admin_ids()
 
 def load_prints():
     if not os.path.exists(PRINT_FILE):
@@ -88,6 +90,7 @@ def callback():
         user_id = event["source"]["userId"]
         users = load_users()
         prints = load_prints()
+        admin_ids = load_admin_ids()
         if message_type == "text":
             text = event["message"]["text"]
         else:
