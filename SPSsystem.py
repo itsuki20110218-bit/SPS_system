@@ -665,12 +665,12 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         ]
     users= load_users()
     prints = load_prints()
-    subjects = (
+    if show_print_numbers:
+        subjects = (
         users[user_id].get("admin_current_subject")
         if users[user_id]["mode"] == "admin"
         else users[user_id].get("current_subject")
     )
-    if show_print_numbers:
         page = users[user_id].get("print_page", 0)
         all_numbers = list(prints.get(subjects, {}).keys())
         page_numbers = get_print_numbers_by_page(all_numbers, page)
