@@ -209,11 +209,11 @@ def callback():
                     return "OK"
                 
                 else:
-                    reply_message(reply_token, "教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                     users[user_id]["admin_status"] = "waiting_edit_print"
                     users[user_id]["admin_current_subject"] = subject
                     users[user_id]["print_page"] = 0
                     save_users(users)
+                    reply_message(reply_token, "教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                     return "OK"
 
             elif admin_status == "waiting_edit_print":
@@ -666,10 +666,11 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
     users= load_users()
     prints = load_prints()
     if show_print_numbers:
-        if users[user_id]["mode"] == "admin":
-            subject = users[user_id].get("admin_current_subject")
-        else:
-            subject = users[user_id].get("current_subject")
+        subject = (
+        users[user_id].get("admin_current_subject")
+        if users[user_id]["mode"] == "admin"
+        else users[user_id].get("current_subject")
+        )
         page = users[user_id].get("print_page", 0)
         all_numbers = list(prints.get(subject, {}).keys())
         page_numbers = get_print_numbers_by_page(all_numbers, page)
