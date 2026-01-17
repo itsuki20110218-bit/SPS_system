@@ -90,7 +90,6 @@ def callback():
         user_id = event["source"]["userId"]
         users = load_users()
         prints = load_prints()
-        admin_ids = load_admin_ids()
         if message_type == "text":
             text = event["message"]["text"]
         else:
@@ -260,7 +259,7 @@ def callback():
                 else:
                     old_path = prints[subject][old_print_number]
                     old_full_path = os.path.join(PUBLIC_HTML, old_path)
-                    new_path = f"prints/{subject}_{new_print_number}.jpg"
+                    new_path = f"prints/{subject}/{new_print_number}.jpg"
                     new_full_path = os.path.join(PUBLIC_HTML, new_path)
                     os.rename(old_full_path, new_full_path)
 
@@ -314,16 +313,16 @@ def callback():
                     return "OK"
                 
                 else:
-                    prints_dir = os.path.join(PUBLIC_HTML, "prints")
+                    prints_dir = os.path.join(PUBLIC_HTML, "prints", subject)
                     os.makedirs(prints_dir, exist_ok=True)
                     save_path = os.path.join(
                         prints_dir,
-                        f"{subject}_{print_number}.jpg"
+                        f"{print_number}.jpg"
                     )
 
                     os.rename(temp_path, save_path) #ファイルをsave_pathで指定した場所に移動
 
-                    prints.setdefault(subject, {})[print_number] = f"prints/{subject}_{print_number}.jpg"
+                    prints.setdefault(subject, {})[print_number] = f"prints/{subject}/{print_number}.jpg"
                     save_prints(prints)
 
                     users[user_id]["admin_status"] = "ready"
@@ -666,11 +665,11 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         ]
     users= load_users()
     prints = load_prints()
-    #subjects = (
-    #    users[user_id].get("admin_current_subject")
-    #    if users[user_id]["mode"] == "admin"
-    #    else users[user_id].get("current_subject")
-    #)
+    subjects = (
+        users[user_id].get("admin_current_subject")
+        if users[user_id]["mode"] == "admin"
+        else users[user_id].get("current_subject")
+    )
     if show_print_numbers:
         page = users[user_id].get("print_page", 0)
         all_numbers = list(prints.get(subjects, {}).keys())
