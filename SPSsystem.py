@@ -308,7 +308,7 @@ def callback():
                 subject = users[user_id]["admin_current_subject"]
                 temp_path = users[user_id]["admin_temp_image"]
 
-                if print_number in prints[subject]:
+                if print_number in list(prints.get(subject, {}).keys()):
                     reply_message(reply_token, "すでに存在する名称です。新しい名称を送信してください。", show_cancel=True)
                     return "OK"
                 
