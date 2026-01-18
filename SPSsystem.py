@@ -151,23 +151,36 @@ def callback():
             elif admin_status == "waiting_delete_subject":
                 subject = text.strip()
                 if subject not in prints:
-                    reply_message(reply_token, "指定された科目は存在しません。")
-                    users[user_id]["admin_status"] = "ready"
+                    reply_message(reply_token, "指定された科目は存在しません。", show_cancel=True, show_subjects=True)
                     save_users(users)
                     return "OK"
                 else:
-                    users[user_id]["admin_status"] = "waiting_delete_print"
+                    users[user_id]["admin_status"] = "waiting_delete_print_category"
                     users[user_id]["admin_current_subject"] = subject
                     users[user_id]["print_page"] = 0
                     save_users(users)
-                    reply_message(reply_token, "教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                    reply_message(reply_token, "カテゴリを選択してください。", show_cancel=True, show_categories=True, user_id=user_id)
                     return "OK"
-
-            elif admin_status == "waiting_delete_print":
+                
+            elif admin_status == "waiting_delete_print_category":
+                category = text.strip()
                 subject = users[user_id]["admin_current_subject"]
+                if category not in prints.get(subject, {}):
+                    reply_message(reply_token, "存在しないカテゴリ名です。", show_cancel=True, show_categories=True, user_id=user_id)
+                    return "OK"
+                
+                users[user_id]["admin_current_category"] = category
+                users[user_id]["admin_status"] = "waiting_delete_print_number"
+                save_users(users)
+                reply_message(reply_token, "削除する教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                return "OK"
+
+            elif admin_status == "waiting_delete_print_number":
                 print_number = text.strip()
+                subject = users[user_id]["admin_current_subject"]
+                category = users[user_id]["admin_current_category"]
                 if text == "次へ":
-                        all_numbers = list(prints[subject].keys())
+                        all_numbers = list(prints[subject][category].keys())
                         max_page = (len(all_numbers) - 1) // 11
 
                         if max_page <= users[user_id]["print_page"]:
@@ -179,7 +192,7 @@ def callback():
                             reply_message(reply_token, "次を表示します。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                             return "OK"
                         
-                if print_number not in prints[subject]:
+                if print_number not in prints[subject][category]:
                     reply_message(reply_token, "指定された教材は存在しません。")
                     users[user_id]["admin_status"] = "ready"
                     users[user_id].pop("admin_current_subject", None)
@@ -187,23 +200,29 @@ def callback():
                     save_users(users)
                     return "OK"
 
-                else:
-                    image_path = prints[subject][print_number]
-                    file_path = os.path.join(PUBLIC_HTML, image_path)
-                    if os.path.exists(file_path):
-                        os.remove(file_path)
-                    del prints[subject][print_number]
+                image_path = prints[subject][category][print_number]
+                file_path = os.path.join(PUBLIC_HTML, image_path)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                del prints[subject][category][print_number]
 
-                    if not prints[subject]:
-                        del prints[subject]
+                if not prints[subject][category]:
+                    category_dir = os.path.join(PUBLIC_HTML, "prints", subject, category)
+                    os.rmdir(category_dir)
+                    del prints[subject][category]
 
-                    reply_message(reply_token, f"削除済み：{subject} - {print_number}")
-                    users[user_id].pop("print_page", None)
-                    save_prints(prints)
+                if not prints[subject]:
+                    subject_dir = os.path.join(PUBLIC_HTML, "prints", subject)
+                    os.rmdir(subject_dir)
+                    del prints[subject]
 
+                save_prints(prints)
+                users[user_id].pop("print_page", None)
                 users[user_id]["admin_status"] = "ready"
                 users[user_id].pop("admin_current_subject", None)
+                users[user_id].pop("admin_current_category", None)
                 save_users(users)
+                reply_message(reply_token, f"削除済み：{subject} - {print_number}")
                 return "OK"
             
             elif admin_status == "waiting_edit_subject":
@@ -742,7 +761,7 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         category = users[user_id].get("admin_current_category") #あとで修正
 
         page = users[user_id].get("print_page", 0)
-        all_numbers = list(prints.get(subject, {}).get(category, {}).keys())
+        all_numbers = list(prints[subject][category].keys())
         page_numbers = get_print_numbers_by_page(all_numbers, page)
 
         for number in page_numbers:
