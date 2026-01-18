@@ -210,13 +210,14 @@ def callback():
                     category_dir = os.path.join(PUBLIC_HTML, "prints", subject, category)
                     os.rmdir(category_dir)
                     del prints[subject][category]
+                    save_prints(prints)
 
                 if not prints[subject]:
                     subject_dir = os.path.join(PUBLIC_HTML, "prints", subject)
                     os.rmdir(subject_dir)
                     del prints[subject]
+                    save_prints(prints)
 
-                save_prints(prints)
                 users[user_id].pop("print_page", None)
                 users[user_id]["admin_status"] = "ready"
                 users[user_id].pop("admin_current_subject", None)
