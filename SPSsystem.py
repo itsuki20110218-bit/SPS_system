@@ -298,45 +298,57 @@ def callback():
                     return "OK"
                 
             elif admin_status == "waiting_subject":
-                subject = text
+                subject = text.strip()
                 if subject not in all_subjects:
                     reply_message(reply_token, "不明な科目です。\n一覧から科目を選択してください。", show_cancel=True, show_subjects=True)
                     return "OK"
-                reply_message(reply_token, "教材名を送信してください。", show_cancel=True)
-                users[user_id]["admin_status"] = "waiting_print_number"
+                
+                users[user_id]["admin_status"] = "waiting_category"
                 users[user_id]["admin_current_subject"] = subject
                 save_users(users)
-                reply_message(reply_token, "教材名を送信してください。", show_cancel=True)
+                reply_message(reply_token, "カテゴリを選択してください。", show_cancel=True, show_categories=True)
+                return "OK"
+            
+            elif admin_status == "waiting_category":
+                category = text.strip()
+                subject = users[user_id]["admin_current_subject"]
+                if category not in prints.get(subject, {}):
+                    reply_message(reply_token, "存在しないカテゴリ名です。", show_cancel=True, show_categories=True)
+                    return "OK"
+                
+                users[user_id]["admin_current_category"] = category
+                users[user_id]["admin_status"] = "waiting_print_number"
+                save_users(users)
+                reply_message(reply_token, "教材の名称を送信してください。")
                 return "OK"
             
             elif admin_status == "waiting_print_number":
-                print_number = text
+                print_number = text.strip()
                 subject = users[user_id]["admin_current_subject"]
+                category = users[user_id]["admin_current_category"]
                 temp_path = users[user_id]["admin_temp_image"]
 
-                if print_number in list(prints.get(subject, {}).keys()):
+                if print_number in prints.get(subject, {}).get(category, {}):
                     reply_message(reply_token, "すでに存在する名称です。新しい名称を送信してください。", show_cancel=True)
                     return "OK"
                 
                 else:
-                    prints_dir = os.path.join(PUBLIC_HTML, "prints", subject)
+                    prints_dir = os.path.join(PUBLIC_HTML, "prints", subject, category)
                     os.makedirs(prints_dir, exist_ok=True)
-                    save_path = os.path.join(
-                        prints_dir,
-                        f"{print_number}.jpg"
-                    )
+                    save_path = os.path.join(prints_dir, f"{print_number}.jpg")
 
                     os.rename(temp_path, save_path) #ファイルをsave_pathで指定した場所に移動
 
-                    prints.setdefault(subject, {})[print_number] = f"prints/{subject}/{print_number}.jpg"
+                    prints.setdefault(subject, {}).setdefault(category, {})[print_number] = f"prints/{subject}/{category}/{print_number}.jpg"
                     save_prints(prints)
 
                     users[user_id]["admin_status"] = "ready"
                     users[user_id].pop("admin_current_subject", None)
+                    users[user_id].pop("admin_current_category", None)
                     users[user_id].pop("admin_temp_image", None)
                     save_users(users)
 
-                    reply_message(reply_token, f"{subject} - {print_number}が正常に登録されました。")
+                    reply_message(reply_token, f"{subject} - {category} - {print_number}が正常に登録されました。")
                     return "OK"
                 
             elif admin_status == "waiting_category_subject":
@@ -617,7 +629,7 @@ def callback():
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
                 return "OK"
 
-def reply_message(reply_token, text, show_cancel=False, show_class=False, show_print_numbers=False, show_subjects=False, show_end=False, show_confirm=False, show_others=False, user_id=None):
+def reply_message(reply_token, text, show_cancel=False, show_class=False, show_print_numbers=False, show_subjects=False, show_end=False, show_categories=False, show_confirm=False, show_others=False, user_id=None):
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
@@ -703,14 +715,34 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         ]
     users= load_users()
     prints = load_prints()
+
+    if show_categories:
+        subject = (
+        users[user_id].get("admin_current_subject")
+        if users[user_id]["mode"] == "admin"
+        else users[user_id].get("current_subject")
+        )
+        all_categories = list(prints.get(subject, {}).keys())
+        for category in all_categories:
+            items.append({
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": category,
+                    "text": category
+                }
+            })
+
     if show_print_numbers:
         subject = (
         users[user_id].get("admin_current_subject")
         if users[user_id]["mode"] == "admin"
         else users[user_id].get("current_subject")
         )
+        category = users[user_id].get("admin_current_category") #あとで修正
+
         page = users[user_id].get("print_page", 0)
-        all_numbers = list(prints.get(subject, {}).keys())
+        all_numbers = list(prints.get(subject, {}).get(category, {}).keys())
         page_numbers = get_print_numbers_by_page(all_numbers, page)
 
         for number in page_numbers:
