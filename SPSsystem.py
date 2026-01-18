@@ -717,11 +717,11 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
     prints = load_prints()
 
     if show_categories:
-        subject = (
-        users[user_id].get("admin_current_subject")
-        if users[user_id]["mode"] == "admin"
-        else users[user_id].get("current_subject")
-        )
+        if users[user_id]["mode"] == "admin":
+            subject = users[user_id].get("admin_current_subject")
+        else:
+            subject = users[user_id].get("current_subject")
+        
         all_categories = list(prints.get(subject, {}).keys())
         for category in all_categories:
             items.append({
@@ -734,11 +734,11 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
             })
 
     if show_print_numbers:
-        subject = (
-        users[user_id].get("admin_current_subject")
-        if users[user_id]["mode"] == "admin"
-        else users[user_id].get("current_subject")
-        )
+        if users[user_id]["mode"] == "admin":
+            subject = users[user_id].get("admin_current_subject")
+        else:
+            subject = users[user_id].get("current_subject")
+        
         category = users[user_id].get("admin_current_category") #あとで修正
 
         page = users[user_id].get("print_page", 0)
