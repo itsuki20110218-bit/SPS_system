@@ -127,6 +127,12 @@ def callback():
                     save_users(users)
                     return "OK"
                 
+                elif text == "カテゴリ作成":
+                    users[user_id]["admin_status"] = "waiting_category_subject"
+                    save_users(users)
+                    reply_message(reply_token, "科目を選択してください。", show_cancel=True, show_subjects=True)
+                    return "OK"
+                
                 elif text == "その他":
                     reply_message(reply_token, "削除する教材の科目を選択してください。", show_cancel=True, show_subjects=True)
                     users[user_id]["admin_status"] = "waiting_delete_subject"
@@ -332,6 +338,38 @@ def callback():
 
                     reply_message(reply_token, f"{subject} - {print_number}が正常に登録されました。")
                     return "OK"
+                
+            elif admin_status == "waiting_category_subject":
+                subject = text.strip()
+                if subject not in all_subjects:
+                    reply_message(reply_token, "不明な科目です。\n一覧から科目を選択してください。", show_cancel=True, show_subjects=True)
+                    return "OK"
+                
+                prints.setdefault(subject, {})
+                save_prints(prints)
+                users[user_id]["admin_status"] = "waiting_category_name"
+                users[user_id]["admin_current_subject"] = subject
+                save_users(users)
+                reply_message(reply_token, "カテゴリ名を送信してください。", show_cancel=True)
+                return "OK"
+            
+            elif admin_status == "waiting_category_name":
+                category_name = text.strip()
+                subject = users[user_id].get("admin_current_subject")
+                if category_name in prints[subject]:
+                    reply_message(reply_token, "すでに存在するカテゴリ名です。", show_cancel=True)
+                    return "OK"
+                
+                category_dir = os.path.join(PUBLIC_HTML, "prints", subject, category_name)
+                os.makedirs(category_dir, exist_ok=True)
+                prints[subject][category_name] = {}
+                save_prints(prints)
+
+                users[user_id].pop("admin_current_subject", None)
+                users[user_id]["admin_status"] = "ready"
+                save_users(users)
+                reply_message(reply_token, f"{subject}内に{category_name}が正常に作成されました。")
+                return "OK"
 
         else:
             register_status = users[user_id]["register_status"]
