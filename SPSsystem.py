@@ -14,8 +14,8 @@ PRINT_FILE = "prints.json"
 ADMIN_IDS = "admin_ids.json"
 
 classes = ["A", "B", "C", "D"]
-all_subjects = ["国語", "数学", "理科", "公民", "英語"]
-        
+all_subjects = ["国語", "数学", "理科", "公民", "英語", "保健", "技術", "家庭"]
+
 def load_admin_ids():
     if not os.path.exists(ADMIN_IDS):
         return "OK"
@@ -121,9 +121,14 @@ def callback():
                     save_users(users)
                     return "OK"
             
-                elif text == "もらう":
-                    reply_message(reply_token, "登録する教材の画像を送信してください。", show_cancel=True)
-                    users[user_id]["admin_status"] = "waiting_image"
+                elif message_type == "image":
+                    reply_message(reply_token, "教材を登録します。科目を選択してください。", show_cancel=True, show_subjects=True)
+                    message_id = event["message"]["id"]
+                    os.makedirs("temp", exist_ok=True) #tempフォルダ（一時保存用）を作成
+                    temp_path = f"temp/{message_id}.jpg" #パス作成
+                    save_image(message_id, temp_path)
+                    users[user_id]["admin_status"] = "waiting_subject"
+                    users[user_id]["admin_temp_image"] = temp_path
                     save_users(users)
                     return "OK"
                 
@@ -299,22 +304,6 @@ def callback():
                     save_users(users)
 
                     reply_message(reply_token, f"{new_print_number}に変更しました。")
-                    return "OK"
-
-            elif admin_status == "waiting_image":
-                if message_type == "image":
-                    reply_message(reply_token, "科目を選択してください。", show_cancel=True, show_subjects=True)
-                    message_id = event["message"]["id"]
-                    os.makedirs("temp", exist_ok=True) #tempフォルダ（一時保存用）を作成
-                    temp_path = f"temp/{message_id}.jpg" #パス作成
-                    save_image(message_id, temp_path)
-                    users[user_id]["admin_status"] = "waiting_subject"
-                    users[user_id]["admin_temp_image"] = temp_path
-                    save_users(users)
-                    return "OK"
-                
-                elif message_type != "image":
-                    reply_message(reply_token, "画像ファイルを送信してください。")
                     return "OK"
                 
             elif admin_status == "waiting_subject":
