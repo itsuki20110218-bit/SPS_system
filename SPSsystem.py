@@ -211,6 +211,7 @@ def callback():
                 if os.path.exists(file_path):
                     os.remove(file_path)
                     del prints[subject][category][print_number]
+                    save_prints(prints)
 
                 if not prints[subject][category]:
                     category_dir = os.path.join(PUBLIC_HTML, "prints", subject, category)
