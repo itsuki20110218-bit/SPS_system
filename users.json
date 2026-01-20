@@ -283,7 +283,7 @@
     "register_status": "registered",
     "name": "澤井壮希",
     "class": "A",
-    "service_status": "done",
+    "service_status": "None",
     "current_subject": "None",
     "mode": "user",
     "admin_status": "-",
@@ -497,7 +497,8 @@
     "current_subject": "None",
     "mode": "user",
     "admin_status": "idle",
-    "violation": 0
+    "violation": 0,
+    "current_category": "授業プリント（英語）"
   },
   "U564dee727f64b2d8e87af68c5448cf80": {
     "register_status": "waiting_name",
@@ -518,5 +519,36 @@
     "mode": "user",
     "admin_status": "-",
     "violation": 3
+  },
+  "U09790159c0703215916fee77aa7ee0f3": {
+    "register_status": "registered",
+    "name": "定塚ゆみ子",
+    "class": "B",
+    "service_status": "waiting_category",
+    "current_subject": "英語",
+    "mode": "user",
+    "admin_status": "-",
+    "violation": 1
+  },
+  "Ue2529e7ba29c2682d87ef99441ca42f5": {
+    "register_status": "registered",
+    "name": "定塚太郎",
+    "class": "B",
+    "service_status": "done",
+    "current_subject": "英語",
+    "mode": "user",
+    "admin_status": "-",
+    "violation": 0,
+    "current_category": "授業プリント"
+  },
+  "U2b4667627ed0cc7270e4553454b23685": {
+    "register_status": "waiting_name",
+    "name": "unknown",
+    "class": "unknown",
+    "service_status": "None",
+    "current_subject": "None",
+    "mode": "user",
+    "admin_status": "-",
+    "violation": 1
   }
 }
