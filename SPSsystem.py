@@ -210,7 +210,7 @@ def callback():
                 file_path = os.path.join(PUBLIC_HTML, image_path)
                 if os.path.exists(file_path):
                     os.remove(file_path)
-                del prints[subject][category][print_number]
+                    del prints[subject][category][print_number]
 
                 if not prints[subject][category]:
                     category_dir = os.path.join(PUBLIC_HTML, "prints", subject, category)
