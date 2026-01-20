@@ -556,6 +556,12 @@ def callback():
                 
                 elif service_status == "waiting_category":
                     category = text.strip()
+                    if text == "その他":
+                        reply_message(reply_token, "登録がない教材ですので、手動での対応となります。\nよろしいですか？", show_confirm=True)
+                        users[user_id]["service_status"] = "waiting_confirm"
+                        save_users(users)
+                        return "OK"
+                    
                     if category not in prints[subject]:
                         reply_message(reply_token, "指定されたカテゴリは見つかりませんでした。\nトーク画面の最下部までスワイプし、科目一覧からの選択をお願いします。", show_cancel=True, show_categories=True, user_id=user_id)
                         return "OK"
@@ -603,7 +609,7 @@ def callback():
                         
                 elif service_status == "waiting_confirm":
                     if text == "はい":
-                        reply_message(reply_token, "担当者におつなぎします。\n返信までしばらくお待ちください。", show_cancel=True)
+                        reply_message(reply_token, "担当者におつなぎします。\n返信まで、ご希望の教材名を送信してお待ちください。", show_cancel=True)
                         users[user_id]["service_status"] = "done"
                         users[user_id]["current_subject"] = "None"
                         save_users(users)
@@ -776,6 +782,15 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
                     "type": "message",
                     "label": category,
                     "text": category
+                }
+            })
+
+            items.append({
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": "その他",
+                    "text": "その他"
                 }
             })
 
