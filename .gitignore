@@ -3,3 +3,4 @@
 /nohup.out
 /gunicorn.log
 /admin_ids.json
+/temp/
