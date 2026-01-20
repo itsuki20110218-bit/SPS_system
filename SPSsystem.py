@@ -95,6 +95,9 @@ def callback():
         else:
             text = None
 
+        if event["source"]["type"] != "user":
+            return "OK"
+
         if user_id not in users:
             reply_message(reply_token, "はじめまして。初回利用のため、ユーザー情報を登録します。\n本名を送信してください。")
             add_users(user_id)
