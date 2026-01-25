@@ -618,7 +618,7 @@ def callback():
                         users[user_id]["service_status"] = "done"
                         users[user_id]["current_subject"] = "None"
                         save_users(users)
-                        reply_message(reply_token, "担当者におつなぎします。\n返信まで、ご希望の教材名を送信してお待ちください。", show_cancel=True)
+                        reply_message(reply_token, "担当者におつなぎします。\n返信までしばらくお待ちください。", show_cancel=True)
                         return "OK"
 
                     elif text == "いいえ":
