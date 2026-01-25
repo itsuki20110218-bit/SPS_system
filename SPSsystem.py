@@ -610,7 +610,7 @@ def callback():
                 elif service_status == "waiting_print_name":
                     users[user_id]["service_status"] = "waiting_confirm"
                     save_users(users)
-                    reply_message(reply_message, "登録がない教材ですので、手動での対応となります。\nよろしいですか？", show_confirm=True)
+                    reply_message(reply_token, "登録がない教材ですので、手動での対応となります。\nよろしいですか？", show_confirm=True)
                     return "OK"
                         
                 elif service_status == "waiting_confirm":
