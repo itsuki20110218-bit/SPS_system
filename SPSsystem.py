@@ -791,14 +791,14 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
                 }
             })
 
-            items.append({
-                "type": "action",
-                "action": {
-                    "type": "message",
-                    "label": "その他",
-                    "text": "その他"
-                }
-            })
+        items.append({
+            "type": "action",
+            "action": {
+                "type": "message",
+                "label": "その他",
+                "text": "その他"
+            }
+        })
 
     if show_print_numbers:
         subject = (
