@@ -234,6 +234,7 @@ def callback():
                 users[user_id].pop("admin_current_category", None)
                 save_users(users)
                 reply_message(reply_token, f"削除済み：{subject} - {category} - {print_number}")
+                push_message(f"{users[user_id]['name']}が\n{subject} - {category} - {print_number}を削除しました。")
                 return "OK"
             
             elif admin_status == "waiting_edit_subject":
@@ -845,7 +846,7 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
                 "label": "キャンセル",
                 "text": "キャンセル"
             }
-    })
+        })
 
     if items:
         message["quickReply"] = {
@@ -864,7 +865,7 @@ def reply_image(reply_token, image_url, subject, category, print_number):
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
-        }
+    }
     body = {
         "replyToken": reply_token,
         "messages": [
@@ -900,4 +901,21 @@ def reply_image(reply_token, image_url, subject, category, print_number):
         ]
     }
 
+    requests.post(url, headers=headers, data=json.dumps(body))
+
+def push_message(text):
+    url = "https://api.line.me/v2/bot/message/push"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
+    }
+    body = {
+        "to": "C93066ba251f38f4b99dda72a3bfc0901",
+        "messages": [
+            {
+            "type": "text",
+            "text": text
+            }
+        ]
+    }
     requests.post(url, headers=headers, data=json.dumps(body))
