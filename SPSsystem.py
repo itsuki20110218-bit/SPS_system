@@ -18,7 +18,7 @@ all_subjects = ["国語", "数学", "理科", "公民", "英語", "保健", "技
 
 def load_admin_ids():
     if not os.path.exists(ADMIN_IDS):
-        return "OK"
+        return []
     with open(ADMIN_IDS, "r", encoding="utf-8") as f:
         return json.load(f)
     
@@ -321,6 +321,7 @@ def callback():
                     save_users(users)
 
                     reply_message(reply_token, f"{new_print_number}に変更しました。")
+                    push_message(f'{users[user_id]["name"]}が\n{subject} - {category} - "{old_print_number}"の名称を\n"{new_print_number}"に変更しました。')
                     return "OK"
                 
             elif admin_status == "waiting_subject":
@@ -385,6 +386,7 @@ def callback():
                     save_users(users)
 
                     reply_message(reply_token, f"{subject} - {category} - {print_number}が正常に登録されました。")
+                    push_message(f"{users[user_id]['name']}が\n{subject} - {category} - {print_number}を登録しました。")
                     return "OK"
                 
             elif admin_status == "waiting_category_subject":
@@ -417,6 +419,7 @@ def callback():
                 users[user_id]["admin_status"] = "ready"
                 save_users(users)
                 reply_message(reply_token, f"{subject}内に{category_name}が正常に作成されました。\n教材を登録する場合は、画像ファイルを送信してください。")
+                push_message(f'{users[user_id]["name"]}が{subject}内にカテゴリ"{category_name}"を作成しました。')
                 return "OK"
 
         else:
@@ -439,6 +442,7 @@ def callback():
             
             if users[user_id]["violation"] >= 10:
                 reply_message(reply_token, "申し訳ありませんが、現在、あなたはSPSを利用できない状態です。", show_others=True)
+                push_message(f"@いつき\n{users[user_id]['name']}さんのユーザー情報リセットをお願いします。")
                 return "OK"
 
             elif register_status == "waiting_name":
@@ -620,6 +624,7 @@ def callback():
                         users[user_id]["current_subject"] = "None"
                         save_users(users)
                         reply_message(reply_token, "担当者におつなぎします。\n返信までしばらくお待ちください。", show_cancel=True)
+                        push_message(f"@Shinta print service\n{users[user_id]["name"]}さんから依頼が届きました。")
                         return "OK"
 
                     elif text == "いいえ":
