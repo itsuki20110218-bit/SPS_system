@@ -593,7 +593,7 @@ def callback():
                             else:
                                 users[user_id]["print_page"] += 1
                                 save_users(users)
-                                reply_message(reply_token, f"（{users[user_id]['print_page'] +1}/{max_page +1} ）\n一覧にない場合は手動対応となりますので、教材名の送信をお願いします。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                                reply_message(reply_token, f"（{users[user_id]['print_page'] +1}/{max_page +1}）\n一覧にない場合は手動対応となりますので、教材名の送信をお願いします。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                                 return "OK"
 
                         if print_number not in prints[subject][category]:
