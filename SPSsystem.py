@@ -209,7 +209,7 @@ def callback():
                     save_users(users)
                     return "OK"
 
-                image_path = prints[subject][category][print_number]
+                image_path = prints[subject][category][print_number]["path"]
                 file_path = os.path.join(PUBLIC_HTML, image_path)
                 if os.path.exists(file_path):
                     os.remove(file_path)
@@ -303,13 +303,13 @@ def callback():
                     return "OK"
                 
                 else:
-                    old_path = prints[subject][category][old_print_number]
+                    old_path = prints[subject][category][old_print_number]["path"]
                     old_full_path = os.path.join(PUBLIC_HTML, old_path)
                     new_path = f"prints/{subject}/{category}/{new_print_number}.jpg"
                     new_full_path = os.path.join(PUBLIC_HTML, new_path)
                     os.rename(old_full_path, new_full_path)
 
-                    prints[subject][category][new_print_number] = new_path
+                    prints[subject][category][new_print_number]["path"] = new_path
                     del prints[subject][category][old_print_number]
                     save_prints(prints)
 
@@ -323,6 +323,81 @@ def callback():
                     reply_message(reply_token, f"{new_print_number}に変更しました。")
                     push_message(f'{users[user_id]["name"]}が\n{subject} - {category} - "{old_print_number}"の名称を\n"{new_print_number}"に変更しました。')
                     return "OK"
+                
+            elif admin_status == "waiting_add_note_subject":
+                subject = text.strip()
+                if subject not in prints:
+                    reply_message(reply_token, "指定された科目は存在しません。", show_cancel=True, show_subjects=True)
+                    save_users(users)
+                    return "OK"
+                else:
+                    users[user_id]["admin_status"] = "waiting_add_note_print_category"
+                    users[user_id]["admin_current_subject"] = subject
+                    users[user_id]["print_page"] = 0
+                    save_users(users)
+                    reply_message(reply_token, "カテゴリを選択してください。", show_cancel=True, show_categories=True, user_id=user_id)
+                    return "OK"
+            
+            elif admin_status == "waiting_add_note_print_category":
+                category = text.strip()
+                subject = users[user_id]["admin_current_subject"]
+                if category not in prints.get(subject, {}):
+                    reply_message(reply_token, "存在しないカテゴリ名です。", show_cancel=True, show_categories=True, user_id=user_id)
+                    return "OK"
+                
+                users[user_id]["admin_current_category"] = category
+                users[user_id]["admin_status"] = "waiting_add_note_print_number"
+                save_users(users)
+                reply_message(reply_token, "ノートを追加する教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                return "OK"
+
+            elif admin_status == "waiting_add_note_print_number":
+                print_number = text.strip()
+                subject = users[user_id]["admin_current_subject"]
+                category = users[user_id]["admin_current_category"]
+                if text == "次へ":
+                        all_numbers = list(prints[subject][category].keys())
+                        max_page = (len(all_numbers) - 1) // 11
+
+                        if max_page <= users[user_id]["print_page"]:
+                            return "OK"
+
+                        users[user_id]["print_page"] += 1
+                        save_users(users)
+                        reply_message(reply_token, "次を表示します。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                        return "OK"
+                        
+                if print_number not in prints[subject][category]:
+                    users[user_id]["admin_status"] = "ready"
+                    users[user_id].pop("admin_current_subject", None)
+                    users[user_id].pop("print_page",  None)
+                    save_users(users)
+                    reply_message(reply_token, "指定された教材は存在しません。")
+                    return "OK"
+                        
+                users[user_id]["current_print_number"] = print_number
+                users[user_id]["admin_status"] = "waiting_add_note"
+                save_users(users)
+                reply_message(reply_token, "ノートの内容を送信してください。", show_cancel=True)
+                return "OK"
+            
+            elif admin_status == "waiting_add_note":
+                note = text.strip()
+                subject = users[user_id]["admin_current_subject"]
+                category = users[user_id]["admin_current_category"]
+                print_number = users[user_id]["current_print_number"]
+                
+                prints[subject][category][print_number]["note"] = note
+                save_prints(prints)
+                users[user_id].pop("print_page", None)
+                users[user_id]["admin_status"] = "ready"
+                users[user_id].pop("admin_current_subject", None)
+                users[user_id].pop("admin_current_category", None)
+                users[user_id].pop("current_print_number", None)
+                save_users(users)
+                reply_message(reply_token, f'{subject} - {category} - {print_number}にノート"{note}"を追加しました。')
+                push_message(f"{users[user_id]['name']}が\n{subject} - {category} - {print_number}に\nノートを追加しました。")
+                return "OK"
                 
             elif admin_status == "waiting_subject":
                 subject = text.strip()
@@ -376,7 +451,7 @@ def callback():
 
                     os.rename(temp_path, save_path) #ファイルをsave_pathで指定した場所に移動
 
-                    prints.setdefault(subject, {}).setdefault(category, {})[print_number] = f"prints/{subject}/{category}/{print_number}.jpg"
+                    prints.setdefault(subject, {}).setdefault(category, {}).setdefault(print_number, {})["path"] = f"prints/{subject}/{category}/{print_number}.jpg"
                     save_prints(prints)
 
                     users[user_id]["admin_status"] = "ready"
@@ -582,6 +657,7 @@ def callback():
                         print_number = text.strip()
                         subject = users[user_id]["current_subject"]
                         category = users[user_id]["current_category"]
+                        note = prints[subject][category][print_number].get("note")
 
                         if text == "次へ":
                             all_numbers = list(prints[subject][category].keys())
@@ -603,10 +679,14 @@ def callback():
                             reply_message(reply_token, f'"{print_number}"は登録がない教材ですので、担当者による手動での対応となります。\nよろしいですか？', show_confirm=True, show_cancel=True)
                             return "OK"
                         
-                        image_path = quote(prints[subject][category][print_number])
+                        image_path = quote(prints[subject][category][print_number]["path"])
                         image_url = f"{BASE_URL}/{image_path}"
-
-                        reply_image(reply_token, image_url, subject, category, print_number)
+                        text = (
+                            f'{category}の"{print_number}"です。\n{note}'
+                            if note
+                            else f'{category}の"{print_number}"です。'
+                        )
+                        reply_image(reply_token, text, image_url, category)
                         users[user_id]["service_status"] = "done"
                         users[user_id].pop("print_page", None)
                         save_users(users)
@@ -624,7 +704,7 @@ def callback():
                         users[user_id]["current_subject"] = "None"
                         save_users(users)
                         reply_message(reply_token, "担当者におつなぎします。\n返信までしばらくお待ちください。", show_cancel=True)
-                        push_message(f"@Shinta print service\n{users[user_id]["name"]}さんから依頼が届きました。")
+                        push_message(f'@Shinta print service\n{users[user_id]["name"]}さんから依頼が届きました。')
                         return "OK"
 
                     elif text == "いいえ":
@@ -865,12 +945,13 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
     }
     requests.post(url, headers=headers, data=json.dumps(body))
 
-def reply_image(reply_token, image_url, subject, category, print_number):
+def reply_image(reply_token, text, image_url, category):
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
     }
+
     body = {
         "replyToken": reply_token,
         "messages": [
@@ -881,7 +962,7 @@ def reply_image(reply_token, image_url, subject, category, print_number):
             },
             {
                 "type": "text",
-                "text": f'{category}の"{print_number}"です。',
+                "text": text,
                 "quickReply": {
                     "items": [
                         {
