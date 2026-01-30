@@ -153,8 +153,14 @@ def callback():
                     save_users(users)
                     return "OK"
                 
+                elif text == "ノート追加":
+                    reply_message(reply_token, "ノートを追加する科目を選択してください。", show_cancel=True, show_subjects=True)
+                    users[user_id]["admin_status"] = "waiting_add_note_subject"
+                    save_users(users)
+                    return "OK"
+                
                 else:
-                    reply_message(reply_token, "教材の登録：画像ファイルを送信\n教材の削除：「もらう」をタップ\nカテゴリ作成：「カテゴリ作成」と送信\n教材の編集：「編集」と送信")
+                    reply_message(reply_token, "教材の登録：画像ファイルを送信\n教材の削除：「もらう」をタップ\nカテゴリ作成：「カテゴリ作成」と送信\n教材の編集：「編集」と送信\nノートの追加：「ノート追加」と送信")
                     return "OK"
             
             elif admin_status == "waiting_delete_subject":
