@@ -523,7 +523,7 @@ def callback():
             
             if users[user_id]["violation"] >= 10:
                 reply_message(reply_token, "申し訳ありませんが、現在、あなたはSPSを利用できない状態です。", show_others=True)
-                push_message(f"@いつき\n{users[user_id]['name']}さんのユーザー情報リセットをお願いします。")
+                push_message(f"{users[user_id]['name']}さんのユーザー情報リセットをお願いします。", mention="Itsuki")
                 return "OK"
 
             elif register_status == "waiting_name":
@@ -663,7 +663,6 @@ def callback():
                         print_number = text.strip()
                         subject = users[user_id]["current_subject"]
                         category = users[user_id]["current_category"]
-                        note = prints[subject][category][print_number].get("note")
 
                         if text == "次へ":
                             all_numbers = list(prints[subject][category].keys())
@@ -687,6 +686,7 @@ def callback():
                         
                         image_path = quote(prints[subject][category][print_number]["path"])
                         image_url = f"{BASE_URL}/{image_path}"
+                        note = prints[subject][category][print_number].get("note")
                         text = (
                             f'{category}の"{print_number}"です。\n{note}'
                             if note
@@ -710,7 +710,7 @@ def callback():
                         users[user_id]["current_subject"] = "None"
                         save_users(users)
                         reply_message(reply_token, "担当者におつなぎします。\n返信までしばらくお待ちください。", show_cancel=True)
-                        push_message(f'@Shinta print service\n{users[user_id]["name"]}さんから依頼が届きました。')
+                        push_message(f'{users[user_id]["name"]}さんから依頼が届きました。', mention="Shinta")
                         return "OK"
 
                     elif text == "いいえ":
@@ -995,18 +995,47 @@ def reply_image(reply_token, text, image_url, category):
 
     requests.post(url, headers=headers, data=json.dumps(body))
 
-def push_message(text):
+def push_message(text, mention):
     url = "https://api.line.me/v2/bot/message/push"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
     }
+    if mention == "Shinta":
+        push_text = "{Shinta}\n" + text
+        substitution = {
+            "Shinta": {
+                "type": "mention",
+                "mentionee": {
+                    "type": "user",
+                    "userId": "Ue7081ca5b49a297b2bf0c359726da764"
+                }
+            }
+        }
+
+    elif mention == "Itsuki":
+        push_text = "{Itsuki}\n" + text
+        substitution = {
+            "Itsuki": {
+                "type": "mention",
+                "mentionee": {
+                    "type": "user",
+                    "userId": "U4eb36bd4d473ed9db5848631fbb6c47d"
+                }
+            }
+        }
+
+    else:
+        push_text = text
+        substitution = {}
+    
     body = {
         "to": "C93066ba251f38f4b99dda72a3bfc0901",
         "messages": [
             {
-            "type": "text",
-            "text": text
+                "type": "textV2",
+                "text": push_text,
+                "substitution": substitution
             }
         ]
     }
