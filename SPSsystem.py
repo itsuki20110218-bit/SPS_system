@@ -87,16 +87,27 @@ def callback():
 
         message_type = event["message"]["type"] #ローカル関数にしてるのはeventが来た時に使うから
         reply_token = event["replyToken"]
+        read_token = event["markAsReadToken"]
         user_id = event["source"]["userId"]
         users = load_users()
         prints = load_prints()
+        if event["source"]["type"] != "user":
+            return "OK"
+        
+        ReadUrl = "https://api.line.me/v2/bot/chat/markAsRead"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
+        }
+        body = {
+            "markAsReadToken": read_token
+        }
+        requests.post(ReadUrl, headers=headers, data=json.dumps(body))
+        
         if message_type == "text":
             text = event["message"]["text"]
         else:
             text = None
-
-        if event["source"]["type"] != "user":
-            return "OK"
 
         if user_id not in users:
             reply_message(reply_token, "はじめまして。初回利用のため、ユーザー情報を登録します。\n本名を送信してください。")
@@ -240,7 +251,7 @@ def callback():
                 users[user_id].pop("admin_current_category", None)
                 save_users(users)
                 reply_message(reply_token, f"削除済み：{subject} - {category} - {print_number}")
-                push_message(f"{users[user_id]['name']}が\n{subject} - {category} - {print_number}を削除しました。")
+                #push_message(f"{users[user_id]['name']}が\n{subject} - {category} - {print_number}を削除しました。")
                 return "OK"
             
             elif admin_status == "waiting_edit_subject":
@@ -327,7 +338,7 @@ def callback():
                     save_users(users)
 
                     reply_message(reply_token, f"{new_print_number}に変更しました。")
-                    push_message(f'{users[user_id]["name"]}が\n{subject} - {category} - "{old_print_number}"の名称を\n"{new_print_number}"に変更しました。')
+                    #push_message(f'{users[user_id]["name"]}が\n{subject} - {category} - "{old_print_number}"の名称を\n"{new_print_number}"に変更しました。')
                     return "OK"
                 
             elif admin_status == "waiting_add_note_subject":
@@ -467,7 +478,7 @@ def callback():
                     save_users(users)
 
                     reply_message(reply_token, f"{subject} - {category} - {print_number}が正常に登録されました。")
-                    push_message(f"{users[user_id]['name']}が\n{subject} - {category} - {print_number}を登録しました。")
+                    #push_message(f"{users[user_id]['name']}が\n{subject} - {category} - {print_number}を登録しました。")
                     return "OK"
                 
             elif admin_status == "waiting_category_subject":
@@ -500,7 +511,7 @@ def callback():
                 users[user_id]["admin_status"] = "ready"
                 save_users(users)
                 reply_message(reply_token, f"{subject}内に{category_name}が正常に作成されました。\n教材を登録する場合は、画像ファイルを送信してください。")
-                push_message(f'{users[user_id]["name"]}が{subject}内にカテゴリ"{category_name}"を作成しました。')
+                #push_message(f'{users[user_id]["name"]}が{subject}内にカテゴリ"{category_name}"を作成しました。')
                 return "OK"
 
         else:
@@ -995,47 +1006,26 @@ def reply_image(reply_token, text, image_url, category):
 
     requests.post(url, headers=headers, data=json.dumps(body))
 
-def push_message(text, mention):
+def push_message(text, mention=None):
     url = "https://api.line.me/v2/bot/message/push"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
     }
+
     if mention == "Shinta":
-        push_text = "{Shinta}\n" + text
-        substitution = {
-            "Shinta": {
-                "type": "mention",
-                "mentionee": {
-                    "type": "user",
-                    "userId": "Ue7081ca5b49a297b2bf0c359726da764"
-                }
-            }
-        }
-
+        to = "Ue7081ca5b49a297b2bf0c359726da764"
     elif mention == "Itsuki":
-        push_text = "{Itsuki}\n" + text
-        substitution = {
-            "Itsuki": {
-                "type": "mention",
-                "mentionee": {
-                    "type": "user",
-                    "userId": "U4eb36bd4d473ed9db5848631fbb6c47d"
-                }
-            }
-        }
-
+        to = "U4eb36bd4d473ed9db5848631fbb6c47d"
     else:
-        push_text = text
-        substitution = {}
+        to = "C93066ba251f38f4b99dda72a3bfc0901"
     
     body = {
-        "to": "C93066ba251f38f4b99dda72a3bfc0901",
+        "to": to,
         "messages": [
             {
                 "type": "textV2",
-                "text": push_text,
-                "substitution": substitution
+                "text": text
             }
         ]
     }
