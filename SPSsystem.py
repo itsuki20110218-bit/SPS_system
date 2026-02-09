@@ -690,7 +690,9 @@ def callback():
                                 return "OK"
 
                         if print_number not in prints[subject][category]:
+                            print_name = text.strip()
                             users[user_id]["service_status"] = "waiting_confirm"
+                            users[user_id]["current_print_name"] = print_name
                             users[user_id].pop("print_page", None)
                             save_users(users)
                             reply_message(reply_token, f'"{print_number}"は登録がない教材ですので、担当者による手動での対応となります。\nよろしいですか？', show_confirm=True, show_cancel=True)
@@ -720,13 +722,17 @@ def callback():
                         
                 elif service_status == "waiting_confirm":
                     if text == "はい":
+                        subject = users[user_id].get("current_subject")
+                        category = users[user_id].get("current_category")
                         print_name = users[user_id].get("current_print_name")
                         users[user_id]["service_status"] = "done"
                         users[user_id]["current_subject"] = "None"
                         users[user_id].pop("current_print_name", None)
                         save_users(users)
                         reply_message(reply_token, "担当者におつなぎします。\n返信までしばらくお待ちください。", show_cancel=True)
-                        push_message(f'{users[user_id]["name"]}さんから依頼が届きました。\n依頼された教材："{print_name}"', mention="Shinta")
+                        if category:
+                            category = f"- {category}"
+                        push_message(f'{users[user_id]["name"]}さんから依頼が届きました。\n依頼された教材："{subject} {category} - {print_name}"', mention="Shinta")
                         return "OK"
 
                     elif text == "いいえ":
