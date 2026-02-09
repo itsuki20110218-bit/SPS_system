@@ -732,7 +732,7 @@ def callback():
                         reply_message(reply_token, "担当者におつなぎします。\n返信までしばらくお待ちください。", show_cancel=True)
                         if category:
                             category = f"- {category}"
-                        push_message(f'{users[user_id]["name"]}さんから依頼が届きました。\n依頼された教材："{subject} {category} - {print_name}"', mention="Shinta")
+                        push_message(f'{users[user_id]["name"]}さんから依頼が届きました。\n依頼された教材：{subject} {category} - "{print_name}"', mention="Shinta")
                         return "OK"
 
                     elif text == "いいえ":
