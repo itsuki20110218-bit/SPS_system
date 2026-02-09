@@ -123,6 +123,7 @@ def callback():
                 users[user_id].pop("admin_temp_image", None)
                 users[user_id].pop("print_page", None)
                 users[user_id].pop("current_print_number", None)
+                users[user_id].pop("current_print_name", None)
                 save_users(users)
                 reply_message(reply_token, "キャンセルしました。")
                 return "OK"
@@ -635,9 +636,9 @@ def callback():
                     subject = text.strip()
                     if subject in all_subjects:
                         if subject not in prints:
-                            reply_message(reply_token, f"{subject}は手動での対応となります。\nよろしいですか？", show_confirm=True)
-                            users[user_id]["service_status"] = "waiting_confirm"
+                            users[user_id]["service_status"] = "waiting_print_name"
                             save_users(users)
+                            reply_message(reply_token, f"{subject}には教材が登録されていないため、手動での対応となります。\nご希望の教材名を送信してください。", show_cancel=True)
                             return "OK"
                         
                         users[user_id]["service_status"] = "waiting_category"
@@ -656,7 +657,7 @@ def callback():
                     if text == "その他":
                         users[user_id]["service_status"] = "waiting_print_name"
                         save_users(users)
-                        reply_message(reply_token, "ご希望の教材名を送信してください。", show_cancel=True)
+                        reply_message(reply_token, "手動での対応となりますので、ご希望の教材名を送信してください。", show_cancel=True)
                         return "OK"
                     
                     if category not in prints[subject]:
@@ -710,18 +711,22 @@ def callback():
                         return "OK"
                 
                 elif service_status == "waiting_print_name":
+                    print_name = text.strip()
                     users[user_id]["service_status"] = "waiting_confirm"
+                    users[user_id]["current_print_name"] = print_name
                     save_users(users)
-                    reply_message(reply_token, "登録がない教材ですので、手動での対応となります。\nよろしいですか？", show_confirm=True)
+                    reply_message(reply_token, "担当者におつなぎします。\nよろしいですか？", show_confirm=True)
                     return "OK"
                         
                 elif service_status == "waiting_confirm":
                     if text == "はい":
+                        print_name = users[user_id].get("current_print_name")
                         users[user_id]["service_status"] = "done"
                         users[user_id]["current_subject"] = "None"
+                        users[user_id].pop("current_print_name", None)
                         save_users(users)
                         reply_message(reply_token, "担当者におつなぎします。\n返信までしばらくお待ちください。", show_cancel=True)
-                        push_message(f'{users[user_id]["name"]}さんから依頼が届きました。', mention="Shinta")
+                        push_message(f'{users[user_id]["name"]}さんから依頼が届きました。\n依頼された教材："{print_name}"', mention="Shinta")
                         return "OK"
 
                     elif text == "いいえ":
