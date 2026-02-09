@@ -87,7 +87,7 @@ def callback():
 
         message_type = event["message"]["type"] #ローカル関数にしてるのはeventが来た時に使うから
         reply_token = event["replyToken"]
-        read_token = event["markAsReadToken"]
+        read_token = event["message"]["markAsReadToken"]
         user_id = event["source"]["userId"]
         users = load_users()
         prints = load_prints()
