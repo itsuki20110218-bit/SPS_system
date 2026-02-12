@@ -638,6 +638,7 @@ def callback():
                     if subject in all_subjects:
                         if subject not in prints:
                             users[user_id]["service_status"] = "waiting_print_name"
+                            users[user_id]["current_subject"] = subject
                             save_users(users)
                             reply_message(reply_token, f"{subject}には教材が登録されていないため、手動での対応となります。\nご希望の教材名を送信してください。", show_cancel=True)
                             return "OK"
@@ -733,6 +734,8 @@ def callback():
                         reply_message(reply_token, "担当者におつなぎします。\n返信までしばらくお待ちください。", show_cancel=True)
                         if category:
                             category = f"- {category}"
+                        else: 
+                            category = ""
                         push_message(f'{users[user_id]["name"]}さんから依頼が届きました。\n依頼された教材：{subject} {category} - "{print_name}"', mention="Shinta")
                         return "OK"
 
