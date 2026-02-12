@@ -709,7 +709,7 @@ def callback():
                                 if category
                                 else ""
                             )
-                            reply_message(reply_token, f'以下の内容で担当者へ依頼を送信します。\n\n科目：{subject} {category}\n教材名：{print_name}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
+                            reply_message(reply_token, f'指定された教材は登録がないため、以下の内容で担当者へ依頼を送信します。\n\n科目：{subject} {category}\n教材名：{print_name}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
                             return "OK"
                         
                         image_path = quote(prints[subject][category][print_number]["path"])
