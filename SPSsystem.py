@@ -125,7 +125,7 @@ def callback():
                 users[user_id].pop("current_print_number", None)
                 users[user_id].pop("current_print_name", None)
                 save_users(users)
-                reply_message(reply_token, "キャンセルしました。")
+                reply_message(reply_token, "操作をキャンセルしました。\n最初のメニューに戻ります。")
                 return "OK"
 
             if admin_status == "ready":
@@ -531,7 +531,7 @@ def callback():
             if users[user_id]["violation"] == 5:
                 users[user_id]["violation"] += 1
                 save_users(users)
-                reply_message(reply_token, f"警告：無効な操作の合計回数が{users[user_id]['violation']}に達しました。\nプログラムの故障に繋がる可能性がありますので、これらの行為はお控えください。\n繰り返された場合には、ユーザー登録を再度行っていただきますのでご了承ください。")
+                reply_message(reply_token, f"無効な操作の合計回数が{users[user_id]['violation']}に達しました。\nプログラムの故障に繋がる可能性がありますので、これらの行為はお控えください。\n繰り返された場合には、ユーザー登録を再度行っていただきますのでご了承ください。")
                 return "OK"
             
             if users[user_id]["violation"] >= 10:
@@ -572,7 +572,7 @@ def callback():
                 else:
                     users[user_id]["violation"] += 1
                     save_users(users)
-                    reply_message(reply_token, "無効な操作です。\nトーク画面の最下部までスワイプし、「はい」または「いいえ」の選択をお願いします。", show_confirm=True)
+                    reply_message(reply_token, "その操作は現在利用できません。\nトーク画面の最下部までスワイプし、「はい」または「いいえ」の選択をお願いします。", show_confirm=True)
                     return "OK"
                 
             elif register_status == "waiting_class":
@@ -692,6 +692,11 @@ def callback():
                                 return "OK"
 
                         if print_number not in prints[subject][category]:
+                            if text == "その他" or "もらう":
+                                reply_message(reply_token, "その操作は現在利用できません。\nご希望の教材を一覧から選択、または教材名の送信をお願いします。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                                users[user_id]["violation"] += 1
+                                save_users(users)
+                                return "OK"
                             print_name = text.strip()
                             users[user_id]["service_status"] = "waiting_confirm"
                             users[user_id]["current_print_name"] = print_name
@@ -715,11 +720,23 @@ def callback():
                         return "OK"
                 
                 elif service_status == "waiting_print_name":
+                    if text == "その他" or "もらう":
+                        reply_message(reply_token, "その操作は現在利用できません。\n教材名の送信をお願いします。", show_cancel=True)
+                        users[user_id]["violation"] += 1
+                        save_users(users)
+                        return "OK"
                     print_name = text.strip()
                     users[user_id]["service_status"] = "waiting_confirm"
                     users[user_id]["current_print_name"] = print_name
                     save_users(users)
-                    reply_message(reply_token, "担当者におつなぎします。\nよろしいですか？", show_confirm=True)
+                    subject = users[user_id].get("current_subject")
+                    category = users[user_id].get("current_category")
+                    category = (
+                        f"- {category}"
+                        if category
+                        else ""
+                    )
+                    reply_message(reply_token, f'以下の内容で担当者へ依頼を送信します。\n\n科目：{subject} {category}\n教材名：{print_name}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
                     return "OK"
                         
                 elif service_status == "waiting_confirm":
@@ -731,25 +748,26 @@ def callback():
                         users[user_id]["current_subject"] = "None"
                         users[user_id].pop("current_print_name", None)
                         save_users(users)
-                        reply_message(reply_token, "担当者におつなぎします。\n返信までしばらくお待ちください。", show_cancel=True)
-                        if category:
-                            category = f"- {category}"
-                        else: 
-                            category = ""
-                        push_message(f'{users[user_id]["name"]}さんから依頼が届きました。\n依頼された教材：{subject} {category} - "{print_name}"', mention="Shinta")
+                        reply_message(reply_token, "担当者へ通知しました。\n返信までしばらくお待ちください。", show_cancel=True)
+                        category = (
+                            f"- {category}"
+                            if category
+                            else ""
+                        )
+                        push_message(f'{users[user_id]["name"]}さんから以下の依頼が届きました。\n科目：{subject} {category}\n教材名：{print_name}', mention="Shinta")
                         return "OK"
 
                     elif text == "いいえ":
                         users[user_id]["service_status"] = "None"
                         users[user_id]["current_subject"] = "None"
                         save_users(users)
-                        reply_message(reply_token, "キャンセルしました。")
+                        reply_message(reply_token, "操作をキャンセルしました。\n最初のメニューに戻ります。")
                         return "OK"
                     
                     else:
                         users[user_id]["violation"] += 1
                         save_users(users)
-                        reply_message(reply_token, "無効な操作です。\nトーク画面の最下部までスワイプし、「はい」または「いいえ」の選択をお願いします。", show_confirm=True)
+                        reply_message(reply_token, "その操作は現在利用できません。\nトーク画面の最下部までスワイプし、「はい」または「いいえ」の選択をお願いします。", show_confirm=True)
                         return "OK"
                         
                 elif service_status == "done":
@@ -894,7 +912,7 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
 
     if show_categories:
         subject = (
-        users[user_id].get("admin_current_subject")
+            users[user_id].get("admin_current_subject")
             if users[user_id]["mode"] == "admin"
             else users[user_id].get("current_subject")
         )
