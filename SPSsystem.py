@@ -767,6 +767,7 @@ def callback():
                     elif text == "いいえ":
                         users[user_id]["service_status"] = "None"
                         users[user_id]["current_subject"] = "None"
+                        users[user_id].pop("current_category", None)
                         save_users(users)
                         reply_message(reply_token, "操作をキャンセルしました。\n最初のメニューに戻ります。")
                         return "OK"
