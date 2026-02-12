@@ -720,7 +720,7 @@ def callback():
                         return "OK"
                 
                 elif service_status == "waiting_print_name":
-                    if text == "その他" or "もらう":
+                    if text in ["その他", "もらう"]:
                         reply_message(reply_token, "その操作は現在利用できません。\n教材名の送信をお願いします。", show_cancel=True)
                         users[user_id]["violation"] += 1
                         save_users(users)
