@@ -327,6 +327,7 @@ def callback():
                     new_full_path = os.path.join(PUBLIC_HTML, new_path)
                     os.rename(old_full_path, new_full_path)
 
+                    prints[subject][category][new_print_number] = prints[subject][category][old_print_number]
                     prints[subject][category][new_print_number]["path"] = new_path
                     del prints[subject][category][old_print_number]
                     save_prints(prints)
