@@ -692,7 +692,7 @@ def callback():
                                 return "OK"
 
                         if print_number not in prints[subject][category]:
-                            if text == "その他" or "もらう":
+                            if text in ["もらう", "その他"]:
                                 reply_message(reply_token, "その操作は現在利用できません。\nご希望の教材を一覧から選択、または教材名の送信をお願いします。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                                 users[user_id]["violation"] += 1
                                 save_users(users)
@@ -720,7 +720,7 @@ def callback():
                         return "OK"
                 
                 elif service_status == "waiting_print_name":
-                    if text in ["その他", "もらう"]:
+                    if text in ["もらう", "その他"]:
                         reply_message(reply_token, "その操作は現在利用できません。\n教材名の送信をお願いします。", show_cancel=True)
                         users[user_id]["violation"] += 1
                         save_users(users)
