@@ -702,7 +702,14 @@ def callback():
                             users[user_id]["current_print_name"] = print_name
                             users[user_id].pop("print_page", None)
                             save_users(users)
-                            reply_message(reply_token, f'"{print_number}"は登録がない教材ですので、担当者による手動での対応となります。\nよろしいですか？', show_confirm=True, show_cancel=True)
+                            subject = users[user_id].get("current_subject")
+                            category = users[user_id].get("current_category")
+                            category = (
+                                f"- {category}"
+                                if category
+                                else ""
+                            )
+                            reply_message(reply_token, f'以下の内容で担当者へ依頼を送信します。\n\n科目：{subject} {category}\n教材名：{print_name}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
                             return "OK"
                         
                         image_path = quote(prints[subject][category][print_number]["path"])
