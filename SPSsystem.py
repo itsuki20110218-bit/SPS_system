@@ -589,7 +589,25 @@ def callback():
                         users[user_id]["admin_status"] = "ready"
 
                     save_users(users)
-                    reply_message(reply_token, "ご協力ありがとうございました。以上で初期設定は完了です。\nSPSを利用するには、下部のメニューから「もらう」をタップしてください。")
+                    url = "https://api.line.me/v2/bot/message/reply"
+                    headers = {
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
+                    }
+                    body = {
+                        "replyToken": reply_token,
+                        "messages": [
+                            {
+                                "type": "text",
+                                "text": "ご協力ありがとうございました。以上で初期設定は完了です。\n基本的なご利用の仕方は、以下の動画をご参照ください。"
+                            },
+                            {
+                            "type": "video",
+                            "originalContentUrl": f"{BASE_URL}/explainVideo.mp4",
+                            "previewImageUrl": f"{BASE_URL}/explainVideo_PreviewImage.png"
+                        }]
+                    }
+                    requests.post(url, headers=headers, data=json.dumps(body))
                     return "OK"
 
             elif register_status == "registered":
