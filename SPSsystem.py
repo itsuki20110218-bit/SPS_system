@@ -13,7 +13,7 @@ USER_FILE = "users.json"
 PRINT_FILE = "prints.json"
 ADMIN_IDS = "admin_ids.json"
 
-classes = ["A", "B", "C", "D"]
+classes = ["A", "B", "C", "D", "E", "F", "G", "H"]
 all_subjects = ["国語", "数学", "理科", "公民", "英語", "保健", "技術", "家庭"]
 
 def load_admin_ids():
