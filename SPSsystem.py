@@ -14,7 +14,7 @@ PRINT_FILE = "prints.json"
 ADMIN_IDS = "admin_ids.json"
 
 classes = ["A", "B", "C", "D", "E", "F", "G", "H"]
-all_subjects = ["国語", "数学", "理科", "公民", "英語", "保健", "技術", "家庭"]
+all_subjects = ["国語", "数学", "理科", "公民", "英語", "保健", "情報"]
 
 def load_admin_ids():
     if not os.path.exists(ADMIN_IDS):
