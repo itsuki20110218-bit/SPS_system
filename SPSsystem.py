@@ -619,6 +619,9 @@ def callback():
                     users[user_id]["service_status"] = "None"
                     users[user_id]["current_subject"] = "None"
                     users[user_id].pop("print_page", None)
+                    users[user_id].pop("current_print_number", None)
+                    users[user_id].pop("suggested_miss_place", None)
+                    users[user_id].pop("suggested_miss_content", None)
                     save_users(users)
                     return "OK"
                 
@@ -739,6 +742,7 @@ def callback():
                             else f'{category}の"{print_number}"です。'
                         )
                         reply_image(reply_token, text, image_url, category)
+                        users[user_id]["current_print_number"] = print_number
                         users[user_id]["service_status"] = "done"
                         users[user_id].pop("print_page", None)
                         save_users(users)
@@ -761,25 +765,64 @@ def callback():
                         if category
                         else ""
                     )
-                    reply_message(reply_token, f'以下の内容で担当者へ依頼を送信します。\n\n科目：{subject} {category}\n教材名：{print_name}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
+                    reply_message(reply_token, f'以下の内容で、担当者へ依頼を送信します。\n\n科目：{subject} {category}\n教材名：{print_name}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
+                    return "OK"
+                
+                elif service_status == "waiting_miss_place":
+                    miss_place = text.strip()
+
+                    users[user_id]["service_status"] = "waiting_miss_content"
+                    users[user_id]["suggested_miss_place"] = miss_place
+                    save_users(users)
+                    reply_message(reply_token, "修正の内容を送信してください。", show_cancel=True)
+                    return "OK"
+                
+                elif service_status == "waiting_miss_content":
+                    miss_content = text.strip()
+                    subject = users[user_id].get("current_subject")
+                    category = users[user_id].get("current_category")
+                    print_number = users[user_id].get("current_print_number")
+                    miss_place = users[user_id].get("suggested_miss_place")
+
+                    users[user_id]["service_status"] = "waiting_confirm"
+                    users[user_id]["suggested_miss_content"] = miss_content
+                    save_users(users)
+                    reply_message(reply_token, f'以下の内容で、修正の提案を送信します。\n\n科目：{subject} - {category}\n教材名：{print_number}\n修正箇所：{miss_place}\n修正内容：{miss_content}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
                     return "OK"
                         
                 elif service_status == "waiting_confirm":
                     if text == "はい":
                         subject = users[user_id].get("current_subject")
                         category = users[user_id].get("current_category")
-                        print_name = users[user_id].get("current_print_name")
+                        print_name = users[user_id].get("current_print_name") #nameは手動対応の時
+                        print_number = users[user_id].get("current_print_number") #number,↓は自動送信の時
+                        miss_place = users[user_id].get("suggested_miss_place")
+                        miss_content = users[user_id].get("suggested_miss_content")
+
                         users[user_id]["service_status"] = "done"
                         users[user_id]["current_subject"] = "None"
                         users[user_id].pop("current_print_name", None)
+                        users[user_id].pop("current_print_number", None)
+                        users[user_id].pop("suggested_miss_place", None)
+                        users[user_id].pop("suggested_miss_content", None)
                         save_users(users)
-                        reply_message(reply_token, "担当者へ通知しました。\n返信までしばらくお待ちください。", show_cancel=True)
+
+                        if print_number and miss_place and miss_content:
+                            branch_message = "教材の精度向上にご協力いただき、ありがとうございました。"
+                            message_for_admin = f'{users[user_id]["name"]}さんから以下の修正提案が届きましたので、ノートを追加してください。\n科目：{subject} - {category}\n教材名：{print_number}\n修正箇所：{miss_place}\n修正内容：{miss_content}'
+                            show_cancel = False
+                        else:
+                            branch_message = "返信までしばらくお待ちください。"
+                            message_for_admin = f'{users[user_id]["name"]}さんから以下の依頼が届きました。\n科目：{subject} {category}\n教材名：{print_name}'
+                            show_cancel = True
+                        reply_message(reply_token, f"担当者へ通知しました。\n{branch_message}", show_cancel)
+
                         category = (
                             f"- {category}"
                             if category
                             else ""
                         )
-                        push_message(f'{users[user_id]["name"]}さんから以下の依頼が届きました。\n科目：{subject} {category}\n教材名：{print_name}', mention="Shinta")
+                        push_message(message_for_admin, mention="Shinta")
                         return "OK"
 
                     elif text == "いいえ":
@@ -810,6 +853,16 @@ def callback():
                         users[user_id]["print_page"] = 0
                         save_users(users)
                         reply_message(reply_token, "ご希望の教材を一覧から選択してください。\n一覧にない場合は、教材名をチャットで送信してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
+                        return "OK"
+                    
+                    elif text == "修正を提案":
+                        subject = users[user_id]["current_subject"]
+                        category = users[user_id]["current_category"]
+                        print_name = users[user_id]["current_print_number"]
+
+                        users[user_id]["service_status"] = "waiting_miss_place"
+                        save_users(users)
+                        reply_message(reply_token, f'以下の教材について修正を提案します。\n\n科目：{subject} {category}\n教材名：{print_name}\n\n修正を提案する箇所を送信してください。', show_cancel=True)
                         return "OK"
                     
                     elif text =="キャンセル":
@@ -1055,6 +1108,14 @@ def reply_image(reply_token, text, image_url, category):
                                 "type": "message",
                                 "label": "終了する",
                                 "text": "終了する"
+                            }
+                        },
+                        {
+                            "type": "action",
+                            "action": {
+                                "type": "message",
+                                "label": "修正を提案",
+                                "text": "修正を提案"
                             }
                         }
                     ]
