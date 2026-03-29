@@ -615,7 +615,7 @@ def callback():
                     return "OK"
                 
                 elif text == "キャンセル" and service_status != "None":
-                    reply_message(reply_token, "キャンセルしました。")
+                    reply_message(reply_token, "操作をキャンセルしました。\n最初のメニューに戻ります。")
                     users[user_id]["service_status"] = "None"
                     users[user_id]["current_subject"] = "None"
                     users[user_id].pop("print_page", None)
@@ -865,14 +865,6 @@ def callback():
                         reply_message(reply_token, f'以下の教材について修正を提案します。\n\n科目：{subject} {category}\n教材名：{print_name}\n\n誤りがあった箇所を送信してください。', show_cancel=True)
                         return "OK"
                     
-                    elif text =="キャンセル":
-                        users[user_id]["service_status"] = "None"
-                        users[user_id]["current_subject"] = "None"
-                        users[user_id].pop("current_category", None)
-                        save_users(users)
-                        reply_message(reply_token, "キャンセルしました。")
-                        return "OK"
-                    
                     elif text == "もらう":
                         name = users[user_id]["name"]
                         users[user_id]["current_subject"] = "None"
@@ -1098,14 +1090,6 @@ def reply_image(reply_token, text, image_url, category):
                             "type": "action",
                             "action": {
                                 "type": "message",
-                                "label": "終了する",
-                                "text": "終了する"
-                            }
-                        },
-                        {
-                            "type": "action",
-                            "action": {
-                                "type": "message",
                                 "label": "続ける",
                                 "text": "続ける"
                             }
@@ -1116,6 +1100,14 @@ def reply_image(reply_token, text, image_url, category):
                                 "type": "message",
                                 "label": "修正を提案",
                                 "text": "修正を提案"
+                            }
+                        },
+                        {
+                            "type": "action",
+                            "action": {
+                                "type": "message",
+                                "label": "終了する",
+                                "text": "終了する"
                             }
                         }
                     ]
