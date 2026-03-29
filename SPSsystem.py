@@ -737,7 +737,7 @@ def callback():
                         image_url = f"{BASE_URL}/{image_path}"
                         note = prints[subject][category][print_number].get("note")
                         text = (
-                            f'{category}の"{print_number}"です。\n{note}'
+                            f'{category}の"{print_number}"です。\n\n〈ノート〉\n{note}'
                             if note
                             else f'{category}の"{print_number}"です。'
                         )
