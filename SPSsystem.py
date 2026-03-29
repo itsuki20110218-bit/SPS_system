@@ -862,7 +862,7 @@ def callback():
 
                         users[user_id]["service_status"] = "waiting_miss_place"
                         save_users(users)
-                        reply_message(reply_token, f'以下の教材について修正を提案します。\n\n科目：{subject} {category}\n教材名：{print_name}\n\n修正を提案する箇所を送信してください。', show_cancel=True)
+                        reply_message(reply_token, f'以下の教材について修正を提案します。\n\n科目：{subject} {category}\n教材名：{print_name}\n\n誤りがあった箇所を送信してください。', show_cancel=True)
                         return "OK"
                     
                     elif text =="キャンセル":
@@ -1098,16 +1098,16 @@ def reply_image(reply_token, text, image_url, category):
                             "type": "action",
                             "action": {
                                 "type": "message",
-                                "label": f"{category}の教材をもらう",
-                                "text": "続ける"
+                                "label": "終了する",
+                                "text": "終了する"
                             }
                         },
                         {
                             "type": "action",
                             "action": {
                                 "type": "message",
-                                "label": "終了する",
-                                "text": "終了する"
+                                "label": "続ける",
+                                "text": "続ける"
                             }
                         },
                         {
