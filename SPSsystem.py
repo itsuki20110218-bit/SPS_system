@@ -504,8 +504,11 @@ def callback():
             
             elif admin_status == "waiting_field":
                 field = text.strip()
+                if field not in subjects[subject]:
+                    reply_message(reply_token, "不明な分野です。\n一覧から分野を選択してください。", show_cancel=True, show_fields=True, user_id=user_id)
+                
                 subject = users[user_id]["admin_current_subject"]
-                prints.setdefault(subject, {})
+                prints[subject].setdefault(field, {})
                 save_prints(prints)
                 users[user_id]["admin_status"] = "waiting_category_name"
                 users[user_id]["current_field"] = field
@@ -523,7 +526,7 @@ def callback():
                 
                 category_dir = os.path.join(PUBLIC_HTML, "prints", subject, field, category_name)
                 os.makedirs(category_dir, exist_ok=True)
-                prints[subject][field][category_name] = {}
+                prints[subject][field].setdefault(category_name, {})
                 save_prints(prints)
 
                 users[user_id].pop("admin_current_subject", None)
