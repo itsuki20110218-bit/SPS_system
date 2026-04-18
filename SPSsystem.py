@@ -635,6 +635,7 @@ def callback():
                     reply_message(reply_token, "操作をキャンセルしました。\n最初のメニューに戻ります。")
                     users[user_id]["service_status"] = "None"
                     users[user_id]["current_subject"] = "None"
+                    users[user_id].pop("current_field", None)
                     users[user_id].pop("print_page", None)
                     users[user_id].pop("current_print_number", None)
                     users[user_id].pop("suggested_miss_place", None)
@@ -673,15 +674,7 @@ def callback():
 
                 elif service_status == "waiting_subject":
                     subject = text.strip()
-
                     if subject in subjects:
-                        if subject not in prints:
-                            users[user_id]["service_status"] = "waiting_print_name"
-                            users[user_id]["current_subject"] = subject
-                            save_users(users)
-                            reply_message(reply_token, f"{subject}には教材が登録されていないため、手動での対応となります。\nご希望の教材名を送信してください。", show_cancel=True)
-                            return "OK"
-                        
                         users[user_id]["service_status"] = "waiting_field"
                         users[user_id]["current_subject"] = subject
                         save_users(users)
@@ -696,14 +689,22 @@ def callback():
                 elif service_status == "waiting_field":
                     field = text.strip()
                     subject = users[user_id]["current_subject"]
-                    if field not in subjects[subject]:
-                        reply_message(reply_token, "指定された分野は見つかりませんでした。\nトーク画面の最下部までスワイプし、分野一覧からの選択をお願いします。", show_cancel=True, show_fields=True, user_id=user_id)
-                        return "OK"
+                    if field in subjects[subject]:
+                        if field not in prints:
+                            users[user_id]["service_status"] = "waiting_print_name"
+                            users[user_id]["current_subject"] = subject
+                            save_users(users)
+                            reply_message(reply_token, f"{subject}には教材が登録されていないため、手動での対応となります。\nご希望の教材名を送信してください。", show_cancel=True)
+                            return "OK"
                     
-                    users[user_id]["service_status"] = "waiting_category"
-                    users[user_id]["current_subject"] = subject
-                    save_users(users)
-                    reply_message(reply_token, f"カテゴリを選択してください。", show_cancel=True, show_categories=True, user_id=user_id)
+                        users[user_id]["service_status"] = "waiting_category"
+                        users[user_id]["current_field"] = field
+                        save_users(users)
+                        reply_message(reply_token, f"カテゴリを選択してください。", show_cancel=True, show_categories=True, user_id=user_id)
+                        return "OK"
+                
+                    reply_message(reply_token, "指定された分野は見つかりませんでした。\nトーク画面の最下部までスワイプし、分野一覧からの選択をお願いします。", show_cancel=True, show_fields=True, user_id=user_id)
+                    users[user_id]["violation"] += 1
                     return "OK"
                 
                 elif service_status == "waiting_category":
@@ -938,11 +939,6 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
     
     users= load_users()
     subjects = load_subjects()
-    subject = (
-        users[user_id].get("admin_current_subject")
-        if users[user_id].get("mode") == "admin"
-        else users[user_id].get("current_subject")
-    )
     prints = load_prints()
         
     items = []
@@ -980,6 +976,11 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
             })
 
     if show_fields:
+        subject = (
+            users[user_id].get("admin_current_subject")
+            if users[user_id].get("mode") == "admin"
+            else users[user_id].get("current_subject")
+        )
         all_fields = subjects[subject]
         for field in all_fields:
             items.append({
@@ -1033,6 +1034,12 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         ]
 
     if show_categories:
+        subject = (
+            users[user_id].get("admin_current_subject")
+            if users[user_id].get("mode") == "admin"
+            else users[user_id].get("current_subject")
+        )
+        field = users[user_id]["current_field"]
         all_categories = list(prints[subject][field].keys())
         for category in all_categories:
             items.append({
