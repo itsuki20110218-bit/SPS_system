@@ -430,9 +430,23 @@ def callback():
                 if subject not in subjects:
                     reply_message(reply_token, "不明な科目です。\n一覧から科目を選択してください。", show_cancel=True, show_subjects=True)
                     return "OK"
+
+                users[user_id]["admin_status"] = "waiting_category"
+                users[user_id]["admin_current_subject"] = subject
+                save_users(users)
+                reply_message(reply_token, "分野を選択してください。", show_cancel=True, show_fields=True, user_id=user_id)
+                return "OK"
+            
+            elif admin_status == "waiting_field":
+                field = text.strip()
+                subject = users[user_id]["admin_current_subject"]
+                if field not in subjects[subject]:
+                    reply_message(reply_token, "不明な分野です。\n一覧から分野を選択してください。", show_cancel=True, show_fields=True)
+                    return "OK"
                 
                 if subject not in prints:
                     prints.setdefault(subject, {})
+                    prints[subject].setdefault(field, {})
                     save_prints(prints)
                     users[user_id]["admin_status"] = "waiting_category_name"
                     users[user_id]["admin_current_subject"] = subject
@@ -440,9 +454,9 @@ def callback():
                     save_users(users)
                     reply_message(reply_token, "カテゴリが存在しないため、作成します。\nカテゴリ名を送信してください。", show_cancel=True)
                     return "OK"
-
+                
                 users[user_id]["admin_status"] = "waiting_category"
-                users[user_id]["admin_current_subject"] = subject
+                users[user_id]["current_field"] = field
                 save_users(users)
                 reply_message(reply_token, "カテゴリを選択してください。", show_cancel=True, show_categories=True, user_id=user_id)
                 return "OK"
@@ -450,7 +464,8 @@ def callback():
             elif admin_status == "waiting_category":
                 category = text.strip()
                 subject = users[user_id]["admin_current_subject"]
-                if category not in prints.get(subject, {}):
+                field = users[user_id]["current_field"]
+                if category not in prints[subject][field]:
                     reply_message(reply_token, "存在しないカテゴリ名です。", show_cancel=True, show_categories=True, user_id=user_id)
                     return "OK"
                 
@@ -463,31 +478,33 @@ def callback():
             elif admin_status == "waiting_print_number":
                 print_number = text.strip()
                 subject = users[user_id]["admin_current_subject"]
+                field = users[user_id]["current_field"]
                 category = users[user_id]["admin_current_category"]
                 temp_path = users[user_id]["admin_temp_image"]
 
-                if print_number in prints.get(subject, {}).get(category, {}):
+                if print_number in prints[subject][field][category]:
                     reply_message(reply_token, "すでに存在する名称です。新しい名称を送信してください。", show_cancel=True)
                     return "OK"
                 
                 else:
-                    prints_dir = os.path.join(PUBLIC_HTML, "prints", subject, category)
+                    prints_dir = os.path.join(PUBLIC_HTML, "prints", subject, field, category)
                     os.makedirs(prints_dir, exist_ok=True)
                     save_path = os.path.join(prints_dir, f"{print_number}.jpg")
 
                     os.rename(temp_path, save_path) #ファイルをsave_pathで指定した場所に移動
 
-                    prints.setdefault(subject, {}).setdefault(category, {}).setdefault(print_number, {})["path"] = f"prints/{subject}/{category}/{print_number}.jpg"
+                    prints.setdefault(subject, {}).setdefault(field, {}).setdefault(category, {}).setdefault(print_number, {})["path"] = f"prints/{subject}/{field}{category}/{print_number}.jpg"
                     save_prints(prints)
 
                     users[user_id]["admin_status"] = "ready"
                     users[user_id].pop("admin_current_subject", None)
+                    users[user_id].pop("current_field", None)
                     users[user_id].pop("admin_current_category", None)
                     users[user_id].pop("admin_temp_image", None)
                     save_users(users)
 
-                    reply_message(reply_token, f"{subject} - {category} - {print_number}が正常に登録されました。")
-                    push_message(f"{users[user_id]['name']}が\n{subject} - {category} - {print_number}を登録しました。")
+                    reply_message(reply_token, f"{subject} - {field} - {category} - {print_number}が正常に登録されました。")
+                    push_message(f"{users[user_id]['name']}が\n{subject} - {field} - {category} - {print_number}を登録しました。")
                     return "OK"
                 
             elif admin_status == "waiting_category_subject":
