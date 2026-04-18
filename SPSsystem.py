@@ -12,9 +12,9 @@ CHANNEL_ACCESS_TOKEN = "KR7Sclg6pbBPdSFHkwyz3czQpCKOzP6ppszkWFROU8kvM0QdV7XaQ6A7
 USER_FILE = "users.json"
 PRINT_FILE = "prints.json"
 ADMIN_IDS = "admin_ids.json"
+all_subjects = "subjects.json"
 
 classes = ["A", "B", "C", "D", "E", "F", "G", "H"]
-all_subjects = ["国語", "数学", "理科", "社会", "英語"]
 
 def load_admin_ids():
     if not os.path.exists(ADMIN_IDS):
@@ -26,6 +26,12 @@ def load_users():
     if not os.path.exists(USER_FILE): 
         return []
     with open(USER_FILE, "r", encoding= "utf-8") as f: #fとして開く（省略）
+        return json.load(f)
+    
+def load_subjects():
+    if not os.path.exists(all_subjects):
+        return []
+    with open(all_subjects, "r", encoding= "utf-8") as f:
         return json.load(f)
 
 def add_users(user_id): # ユーザー情報を追加
@@ -656,6 +662,7 @@ def callback():
 
                 elif service_status == "waiting_subject":
                     subject = text.strip()
+
                     if subject in all_subjects:
                         if subject not in prints:
                             users[user_id]["service_status"] = "waiting_print_name"
@@ -663,6 +670,12 @@ def callback():
                             save_users(users)
                             reply_message(reply_token, f"{subject}には教材が登録されていないため、手動での対応となります。\nご希望の教材名を送信してください。", show_cancel=True)
                             return "OK"
+                        
+                        users[user_id]["service_status"] = "waiting_field"
+                        users[user_id]["current_subject"] = subject
+                        save_users(users)
+                        reply_message(reply_token, f"分野を選択してください。", show_fields=True)
+                        return "OK"
                         
                         users[user_id]["service_status"] = "waiting_category"
                         users[user_id]["current_subject"] = subject
@@ -674,6 +687,11 @@ def callback():
                     users[user_id]["violation"] += 1
                     save_users(users)
                     return "OK"
+                
+                elif service_status == "waiting_field":
+                    field = text.strip()
+                    subject = users[user_id]["current_subject"]
+                    if field in all_subjects
                 
                 elif service_status == "waiting_category":
                     category = text.strip()
@@ -894,7 +912,7 @@ def callback():
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
                 return "OK"
 
-def reply_message(reply_token, text, show_cancel=False, show_class=False, show_print_numbers=False, show_subjects=False, show_end=False, show_categories=False, show_confirm=False, show_others=False, user_id=None):
+def reply_message(reply_token, text, show_cancel=False, show_class=False, show_print_numbers=False, show_subjects=False, show_fields=False, show_end=False, show_categories=False, show_confirm=False, show_others=False, user_id=None):
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
@@ -904,6 +922,10 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
             "type": "text",
             "text": text
         }
+    
+    users= load_users()
+    all_subjects = load_subjects()
+    prints = load_prints()
         
     items = []
     if show_class:
@@ -938,6 +960,18 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
                     "text": subject
                 }
             })
+
+    if show_fields:
+        for field in list(all_subjects[subject].keys()):
+            items.append({
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": field,
+                    "text": field
+                    }
+                }
+            )
 
     if show_confirm:
         items = [
@@ -978,8 +1012,6 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
                 }
             }
         ]
-    users= load_users()
-    prints = load_prints()
 
     if show_categories:
         subject = (
