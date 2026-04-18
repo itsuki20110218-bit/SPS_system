@@ -940,7 +940,7 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
     subjects = load_subjects()
     subject = (
         users[user_id].get("admin_current_subject")
-        if users[user_id]["mode"] == "admin"
+        if users[user_id].get("mode") == "admin"
         else users[user_id].get("current_subject")
     )
     prints = load_prints()
