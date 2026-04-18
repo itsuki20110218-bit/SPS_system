@@ -980,7 +980,7 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
             })
 
     if show_fields:
-        all_fields = list(subjects[subject].keys())
+        all_fields = subjects[subject]
         for field in all_fields:
             items.append({
                 "type": "action",
