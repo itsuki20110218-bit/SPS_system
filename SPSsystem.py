@@ -745,6 +745,8 @@ def callback():
                 
                 elif service_status == "waiting_category":
                     category = text.strip()
+                    subject = users[user_id]["current_subject"]
+                    field = users[user_id]["current_field"]
                     if text == "その他":
                         users[user_id]["service_status"] = "waiting_print_name"
                         save_users(users)
