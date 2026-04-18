@@ -509,7 +509,7 @@ def callback():
 
                     os.rename(temp_path, save_path) #ファイルをsave_pathで指定した場所に移動
 
-                    prints.setdefault(subject, {}).setdefault(field, {}).setdefault(category, {}).setdefault(print_number, {})["path"] = f"prints/{subject}/{field}{category}/{print_number}.jpg"
+                    prints.setdefault(subject, {}).setdefault(field, {}).setdefault(category, {}).setdefault(print_number, {})["path"] = f"prints/{subject}/{field}/{category}/{print_number}.jpg"
                     save_prints(prints)
 
                     users[user_id]["admin_status"] = "ready"
