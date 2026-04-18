@@ -1102,6 +1102,14 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         })
 
     if show_print_numbers:
+        subject = (
+            users[user_id].get("admin_current_subject")
+            if users[user_id].get("mode") == "admin"
+            else users[user_id].get("current_subject")
+        )
+
+        field = users[user_id]["current_field"]
+
         category = (
             users[user_id].get("admin_current_category")
             if users[user_id]["mode"] == "admin"
