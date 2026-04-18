@@ -12,7 +12,7 @@ CHANNEL_ACCESS_TOKEN = "KR7Sclg6pbBPdSFHkwyz3czQpCKOzP6ppszkWFROU8kvM0QdV7XaQ6A7
 USER_FILE = "users.json"
 PRINT_FILE = "prints.json"
 ADMIN_IDS = "admin_ids.json"
-all_subjects = "subjects.json"
+ALL_SUBJECTS = "subjects.json"
 
 classes = ["A", "B", "C", "D", "E", "F", "G", "H"]
 
@@ -29,9 +29,9 @@ def load_users():
         return json.load(f)
     
 def load_subjects():
-    if not os.path.exists(all_subjects):
+    if not os.path.exists(ALL_SUBJECTS):
         return []
-    with open(all_subjects, "r", encoding= "utf-8") as f:
+    with open(ALL_SUBJECTS, "r", encoding= "utf-8") as f:
         return json.load(f)
 
 def add_users(user_id): # ユーザー情報を追加
@@ -96,6 +96,7 @@ def callback():
         read_token = event["message"]["markAsReadToken"]
         user_id = event["source"]["userId"]
         users = load_users()
+        subjects = load_subjects()
         prints = load_prints()
         if event["source"]["type"] != "user":
             return "OK"
@@ -426,7 +427,7 @@ def callback():
                 
             elif admin_status == "waiting_subject":
                 subject = text.strip()
-                if subject not in all_subjects:
+                if subject not in subjects:
                     reply_message(reply_token, "不明な科目です。\n一覧から科目を選択してください。", show_cancel=True, show_subjects=True)
                     return "OK"
                 
@@ -491,7 +492,7 @@ def callback():
                 
             elif admin_status == "waiting_category_subject":
                 subject = text.strip()
-                if subject not in all_subjects:
+                if subject not in subjects:
                     reply_message(reply_token, "不明な科目です。\n一覧から科目を選択してください。", show_cancel=True, show_subjects=True)
                     return "OK"
                 
@@ -663,7 +664,7 @@ def callback():
                 elif service_status == "waiting_subject":
                     subject = text.strip()
 
-                    if subject in all_subjects:
+                    if subject in subjects:
                         if subject not in prints:
                             users[user_id]["service_status"] = "waiting_print_name"
                             users[user_id]["current_subject"] = subject
@@ -674,13 +675,7 @@ def callback():
                         users[user_id]["service_status"] = "waiting_field"
                         users[user_id]["current_subject"] = subject
                         save_users(users)
-                        reply_message(reply_token, f"分野を選択してください。", show_fields=True)
-                        return "OK"
-                        
-                        users[user_id]["service_status"] = "waiting_category"
-                        users[user_id]["current_subject"] = subject
-                        save_users(users)
-                        reply_message(reply_token, f"カテゴリを選択してください。", show_cancel=True, show_categories=True, user_id=user_id)
+                        reply_message(reply_token, f"分野を選択してください。", show_cancel=True, show_fields=True, user_id=user_id)
                         return "OK"
                         
                     reply_message(reply_token, f"指定された科目は見つかりませんでした。\nトーク画面の最下部までスワイプし、科目一覧からの選択をお願いします。", show_cancel=True, show_subjects=True)
@@ -691,7 +686,15 @@ def callback():
                 elif service_status == "waiting_field":
                     field = text.strip()
                     subject = users[user_id]["current_subject"]
-                    if field in all_subjects
+                    if field not in subjects[subject]:
+                        reply_message(reply_token, "指定された分野は見つかりませんでした。\nトーク画面の最下部までスワイプし、分野一覧からの選択をお願いします。", show_cancel=True, show_fields=True, user_id=user_id)
+                        return "OK"
+                    
+                    users[user_id]["service_status"] = "waiting_category"
+                    users[user_id]["current_subject"] = subject
+                    save_users(users)
+                    reply_message(reply_token, f"カテゴリを選択してください。", show_cancel=True, show_categories=True, user_id=user_id)
+                    return "OK"
                 
                 elif service_status == "waiting_category":
                     category = text.strip()
@@ -924,7 +927,12 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         }
     
     users= load_users()
-    all_subjects = load_subjects()
+    subjects = load_subjects()
+    subject = (
+        users[user_id].get("admin_current_subject")
+        if users[user_id]["mode"] == "admin"
+        else users[user_id].get("current_subject")
+    )
     prints = load_prints()
         
     items = []
@@ -951,7 +959,7 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         )
 
     if show_subjects:
-        for subject in all_subjects:
+        for subject in subjects:
             items.append({
                 "type": "action",
                 "action": {
@@ -962,7 +970,8 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
             })
 
     if show_fields:
-        for field in list(all_subjects[subject].keys()):
+        all_fields = list(subjects[subject].keys())
+        for field in all_fields:
             items.append({
                 "type": "action",
                 "action": {
@@ -1014,12 +1023,7 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         ]
 
     if show_categories:
-        subject = (
-            users[user_id].get("admin_current_subject")
-            if users[user_id]["mode"] == "admin"
-            else users[user_id].get("current_subject")
-        )
-        all_categories = list(prints.get(subject, {}).keys())
+        all_categories = list(prints[subject][field].keys())
         for category in all_categories:
             items.append({
                 "type": "action",
@@ -1040,11 +1044,6 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         })
 
     if show_print_numbers:
-        subject = (
-            users[user_id].get("admin_current_subject")
-            if users[user_id]["mode"] == "admin"
-            else users[user_id].get("current_subject")
-        )
         category = (
             users[user_id].get("admin_current_category")
             if users[user_id]["mode"] == "admin"
@@ -1052,7 +1051,7 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         )
 
         page = users[user_id].get("print_page", 0)
-        all_numbers = list(prints[subject][category].keys())
+        all_numbers = list(prints[subject][field][category].keys())
         page_numbers = get_print_numbers_by_page(all_numbers, page)
 
         for number in page_numbers:
