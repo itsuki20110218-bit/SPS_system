@@ -513,13 +513,13 @@ def callback():
                     reply_message(reply_token, "不明な科目です。\n一覧から科目を選択してください。", show_cancel=True, show_subjects=True)
                     return "OK"
                 
-                users[user_id]["admin_status"] = "waiting_field"
+                users[user_id]["admin_status"] = "waiting_category_field"
                 users[user_id]["admin_current_subject"] = subject
                 save_users(users)
                 reply_message(reply_token, "分野を選択して下さい。", show_cancel=True, show_fields=True, user_id=user_id)
                 return "OK"
             
-            elif admin_status == "waiting_field":
+            elif admin_status == "waiting_category_field":
                 field = text.strip()
                 subject = users[user_id]["admin_current_subject"]
                 if field not in subjects[subject]:
