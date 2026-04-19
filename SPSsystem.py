@@ -593,8 +593,7 @@ def callback():
                     users[user_id].pop("admin_temp_image", None)
                     save_users(users)
 
-                    reply_message(reply_token, f"{field} - {category} - {print_number}（{group}用）正常に登録されました。")
-                    push_message(f"{users[user_id]['name']}が\n{field} - {category} - {print_number}（{group}用）を登録しました。")
+                    reply_message(reply_token, f"{field} - {category} - {print_number}（{group}用）が登録されました。")
                     return "OK"
                 
             elif admin_status == "waiting_category_subject":
@@ -800,11 +799,11 @@ def callback():
                     field = text.strip()
                     subject = users[user_id]["current_subject"]
                     if field in subjects[subject]:
-                        if field not in prints[subject]:
+                        if subject not in prints or field not in prints[subject]:
                             users[user_id]["service_status"] = "waiting_print_name"
                             users[user_id]["current_subject"] = subject
                             save_users(users)
-                            reply_message(reply_token, f"{subject} - {field}には教材が登録されていないため、手動での対応となります。\nご希望の教材名を送信してください。", show_cancel=True)
+                            reply_message(reply_token, f"{field}には教材が登録されていないため、手動での対応となります。\nご希望の教材名を送信してください。", show_cancel=True)
                             return "OK"
                     
                         users[user_id]["service_status"] = "waiting_category"
@@ -922,18 +921,19 @@ def callback():
                         users[user_id]["violation"] += 1
                         save_users(users)
                         return "OK"
+                    
                     print_name = text.strip()
                     users[user_id]["service_status"] = "waiting_confirm"
                     users[user_id]["current_print_name"] = print_name
                     save_users(users)
-                    subject = users[user_id].get("current_subject")
+                    field = users[user_id].get("current_field")
                     category = users[user_id].get("current_category")
                     category = (
                         f"- {category}"
                         if category
                         else ""
                     )
-                    reply_message(reply_token, f'以下の内容で、担当者へ依頼を送信します。\n\n科目：{subject} {category}\n教材名：{print_name}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
+                    reply_message(reply_token, f'以下の内容で、担当者へ依頼を送信します。\n\n科目：{field} - {category}\n教材名：{print_name}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
                     return "OK"
                 
                 elif service_status == "waiting_miss_place":
@@ -947,7 +947,7 @@ def callback():
                 
                 elif service_status == "waiting_miss_content":
                     miss_content = text.strip()
-                    subject = users[user_id].get("current_subject")
+                    field = users[user_id].get("current_field")
                     category = users[user_id].get("current_category")
                     print_number = users[user_id].get("current_print_number")
                     miss_place = users[user_id].get("suggested_miss_place")
@@ -955,12 +955,12 @@ def callback():
                     users[user_id]["service_status"] = "waiting_confirm"
                     users[user_id]["suggested_miss_content"] = miss_content
                     save_users(users)
-                    reply_message(reply_token, f'以下の内容で、修正の提案を送信します。\n\n科目：{subject} - {category}\n教材名：{print_number}\n修正箇所：{miss_place}\n修正内容：{miss_content}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
+                    reply_message(reply_token, f'以下の内容で、修正の提案を送信します。\n\n科目：{field} - {category}\n教材名：{print_number}\n修正箇所：{miss_place}\n修正内容：{miss_content}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
                     return "OK"
                         
                 elif service_status == "waiting_confirm":
                     if text == "はい":
-                        subject = users[user_id].get("current_subject")
+                        field = users[user_id].get("current_field")
                         category = users[user_id].get("current_category")
                         print_name = users[user_id].get("current_print_name") #nameは手動対応の時
                         print_number = users[user_id].get("current_print_number") #number,↓は自動送信の時
@@ -969,6 +969,7 @@ def callback():
 
                         users[user_id]["service_status"] = "done"
                         users[user_id]["current_subject"] = "None"
+                        users[user_id].pop("current_field", None)
                         users[user_id].pop("current_print_name", None)
                         users[user_id].pop("current_print_number", None)
                         users[user_id].pop("suggested_miss_place", None)
