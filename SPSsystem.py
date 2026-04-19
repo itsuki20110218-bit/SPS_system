@@ -559,6 +559,7 @@ def callback():
                 users[user_id]["admin_status"] = "waiting_print_number"
                 save_users(users)
                 prints[subject][field][category].setdefault(users[user_id]["current_group"], {})
+                save_prints(prints)
                 reply_message(reply_token, "教材の名称を送信してください。")
                 return "OK"
             
