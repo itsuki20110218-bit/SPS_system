@@ -614,7 +614,7 @@ def callback():
                 if field not in subjects[subject]:
                     reply_message(reply_token, "不明な分野です。\n一覧から分野を選択してください。", show_cancel=True, show_fields=True, user_id=user_id)
                 
-                prints[subject].setdefault(field, {})
+                prints.setdefault(subject, {}).setdefault(field, {})
                 save_prints(prints)
                 users[user_id]["admin_status"] = "waiting_category_name"
                 users[user_id]["current_field"] = field
