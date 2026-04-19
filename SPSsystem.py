@@ -802,6 +802,7 @@ def callback():
                         if subject not in prints or field not in prints[subject]:
                             users[user_id]["service_status"] = "waiting_print_name"
                             users[user_id]["current_subject"] = subject
+                            users[user_id]["current_field"] = field
                             save_users(users)
                             reply_message(reply_token, f"{field}には教材が登録されていないため、手動での対応となります。\nご希望の教材名を送信してください。", show_cancel=True)
                             return "OK"
@@ -933,7 +934,7 @@ def callback():
                         if category
                         else ""
                     )
-                    reply_message(reply_token, f'以下の内容で、担当者へ依頼を送信します。\n\n科目：{field} - {category}\n教材名：{print_name}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
+                    reply_message(reply_token, f'以下の内容で、担当者へ依頼を送信します。\n\n科目：{field} {category}\n教材名：{print_name}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
                     return "OK"
                 
                 elif service_status == "waiting_miss_place":
@@ -1132,6 +1133,14 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
             )
 
     if show_groups:
+        items.append({
+            "type": "action",
+            "action": {
+                "type": "message",
+                "label": "すべて",
+                "text": "すべて"                    
+            }
+        })
         for group in groups:
             items.append({
                 "type": "action",
