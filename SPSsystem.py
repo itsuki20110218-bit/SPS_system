@@ -524,6 +524,7 @@ def callback():
                 
                 users[user_id]["admin_current_category"] = category
                 users[user_id]["admin_status"] = "waiting_group"
+                save_users(users)
                 reply_message(reply_token, "グループを選択してください。", show_cancel=True, show_groups=True, user_id=user_id)
                 return "OK"
             
@@ -1093,8 +1094,8 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
                 "type": "action",
                 "action": {
                     "type": "message",
-                    "label": group,
-                    "text": group
+                    "label": ",".join(group),
+                    "text": ",".join(group)
                 }
             })
     if show_confirm:
