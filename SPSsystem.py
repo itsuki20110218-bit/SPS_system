@@ -832,7 +832,7 @@ def callback():
                         return "OK"
                     
                     user_class = users[user_id]["class"]
-                    for group in print[subject][field][category]:
+                    for group in prints[subject][field][category]:
                         if group == "all_classes":
                             target_group = group
                         else:
