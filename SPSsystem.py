@@ -983,6 +983,11 @@ def callback():
                             show_cancel = False
                         else:
                             branch_message = "返信までしばらくお待ちください。"
+                            category = (
+                                f"- {category}"
+                                if category
+                                else ""
+                            )
                             message_for_admin = f'{users[user_id]["name"]}さんから以下の依頼が届きました。\n科目：{subject} {category}\n教材名：{print_name}'
                             show_cancel = True
                         reply_message(reply_token, f"担当者へ通知しました。\n{branch_message}", show_cancel)
