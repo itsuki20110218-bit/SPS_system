@@ -1100,13 +1100,13 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
             )
 
     if show_groups:
-        for group_name in groups["name"]:
+        for group in groups:
             items.append({
                 "type": "action",
                 "action": {
                     "type": "message",
-                    "label": group_name,
-                    "text": group_name
+                    "label": group["name"],
+                    "text": group["name"]
                 }
             })
     if show_confirm:
