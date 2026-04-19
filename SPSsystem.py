@@ -564,6 +564,7 @@ def callback():
                 field = users[user_id]["current_field"]
                 category = users[user_id]["admin_current_category"]
                 group = users[user_id]["current_group"]
+                group = ",".join(group)
                 temp_path = users[user_id]["admin_temp_image"]
 
                 if print_number in prints[subject][field][category][group]:
