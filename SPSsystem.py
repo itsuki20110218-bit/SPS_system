@@ -84,7 +84,7 @@ def save_prints(prints):
 
 def save_groups(groups):
     with open(GROUPS, "w", encoding="utf-8") as f:
-        json.dump(groups, ensure_ascii= False, indent= 2)
+        json.dump(groups, f, ensure_ascii= False, indent= 2)
 
 def get_print_numbers_by_page(numbers, page, per_page=11):
     start = page * per_page
