@@ -582,7 +582,7 @@ def callback():
 
                     os.rename(temp_path, save_path) #ファイルをsave_pathで指定した場所に移動
 
-                    prints.setdefault(subject, {}).setdefault(field, {}).setdefault(category, {}).setdefault(group, {}).setdefault(print_number, {})["path"] = f"prints/{subject}/{field}/{category}/{group}{print_number}.jpg"
+                    prints.setdefault(subject, {}).setdefault(field, {}).setdefault(category, {}).setdefault(group, {}).setdefault(print_number, {})["path"] = f"prints/{subject}/{field}/{category}/{group}/{print_number}.jpg"
                     save_prints(prints)
 
                     users[user_id]["admin_status"] = "ready"
@@ -831,6 +831,18 @@ def callback():
                         reply_message(reply_token, "指定されたカテゴリは見つかりませんでした。\nトーク画面の最下部までスワイプし、科目一覧からの選択をお願いします。", show_cancel=True, show_categories=True, user_id=user_id)
                         return "OK"
                     
+                    user_class = users[user_id]["class"]
+                    for group in print[subject][field][category]:
+                        if group == "all_classes":
+                            target_group = group
+                        else:
+                            classes = group.split(",")
+                            if user_class in classes:
+                                target_group = group
+                            else:
+                                reply_message(reply_token, f"申し訳ありませんが、{user_class}組の教材は選択されたカテゴリに対応していません。", show_cancel=True)
+                                return "OK"
+
                     users[user_id]["service_status"] = "waiting_print_number"
                     users[user_id]["current_category"] = category
                     users[user_id]["print_page"] = 0
@@ -843,6 +855,14 @@ def callback():
                         subject = users[user_id]["current_subject"]
                         field = users[user_id]["current_field"]
                         category = users[user_id]["current_category"]
+                        user_class = users[user_id]["class"]
+                        for group in print[subject][field][category]:
+                            if group == "all_classes":
+                                target_group = group
+                            else:
+                                classes = group.split(",")
+                                if user_class in classes:
+                                    target_group = group
 
                         if text == "次へ":
                             all_numbers = list(prints[subject][field][category].keys())
@@ -880,9 +900,9 @@ def callback():
                             reply_message(reply_token, f'指定された教材は登録がないため、以下の内容で担当者へ依頼を送信します。\n\n科目：{subject} {field} {category}\n教材名：{print_name}\n\n内容をご確認の上、「はい」を選択してください。', show_confirm=True)
                             return "OK"
                         
-                        image_path = quote(prints[subject][field][category][print_number]["path"])
+                        image_path = quote(prints[subject][field][category][target_group][print_number]["path"])
                         image_url = f"{BASE_URL}/{image_path}"
-                        note = prints[subject][field][category][print_number].get("note")
+                        note = prints[subject][field][category][target_group][print_number].get("note")
                         text = (
                             f'{category}の"{print_number}"です。\n\n〈ノート〉\n{note}'
                             if note
@@ -1201,8 +1221,17 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
             else users[user_id].get("current_category")
         )
 
+        user_class = users[user_id]["class"]
+        for group in prints[subject][field][category]:
+            if group == "all_classes":
+                target_group = group
+            else:
+                classes = group.split(",")
+                if user_class in classes:
+                    target_group = group
+
         page = users[user_id].get("print_page", 0)
-        all_numbers = list(prints[subject][field][category].keys())
+        all_numbers = list(prints[subject][field][category][target_group].keys())
         page_numbers = get_print_numbers_by_page(all_numbers, page)
 
         for number in page_numbers:
