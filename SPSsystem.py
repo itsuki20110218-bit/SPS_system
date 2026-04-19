@@ -576,7 +576,7 @@ def callback():
                     return "OK"
                 
                 else:
-                    prints_dir = os.path.join(PUBLIC_HTML, "prints", subject, field, group, category)
+                    prints_dir = os.path.join(PUBLIC_HTML, "prints", subject, field, category, group)
                     os.makedirs(prints_dir, exist_ok=True)
                     save_path = os.path.join(prints_dir, f"{print_number}.jpg")
 
