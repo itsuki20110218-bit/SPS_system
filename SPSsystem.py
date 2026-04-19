@@ -371,12 +371,9 @@ def callback():
             elif admin_status == "waiting_group_class":
                 group = users[user_id].get("current_group", [])
                 if text == "完了":
-                    groups.append(group)
-                    save_groups(groups)
-                    reply_message(reply_token, f"グループ{group}が作成されました。")
-                    users[user_id].pop("current_group", None)
-                    users[user_id]["admin_status"] = "ready"
+                    users[user_id]["admin_status"] = "waiting_group_name"
                     save_users(users)
+                    reply_message(reply_token, "グループの名称を送信して下さい。", show_cancel=True)
                     return "OK"
 
                 added_class = text.strip()
@@ -395,7 +392,7 @@ def callback():
                     "classes": group
                 })
                 save_groups(groups)
-                reply_message(reply_token, f"グループ{group}が作成されました。")
+                reply_message(reply_token, f'グループ"{group_name}"が作成されました。')
                 users[user_id].pop("current_group", None)
                 users[user_id]["admin_status"] = "ready"
                 save_users(users)
