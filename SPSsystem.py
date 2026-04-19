@@ -541,6 +541,9 @@ def callback():
             
             elif admin_status == "waiting_group":
                 group_names = [g["name"] for g in groups]
+                subject = users[user_id]["admin_current_subject"]
+                field = users[user_id]["current_field"]
+                category = users[user_id]["admin_current_category"]
 
                 if text == "すべて":
                     users[user_id]["current_group"] = "all_classes"
