@@ -839,9 +839,10 @@ def callback():
                             classes = group.split(",")
                             if user_class in classes:
                                 target_group = group
-                            else:
-                                reply_message(reply_token, f"申し訳ありませんが、{user_class}組の教材は選択されたカテゴリに対応していません。", show_cancel=True)
-                                return "OK"
+                    
+                    if not target_group:
+                        reply_message(reply_token, f"申し訳ありませんが、{user_class}組の教材は選択されたカテゴリに対応していません。", show_cancel=True)
+                        return "OK"
 
                     users[user_id]["service_status"] = "waiting_print_number"
                     users[user_id]["current_category"] = category
