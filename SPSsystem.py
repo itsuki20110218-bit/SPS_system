@@ -12,7 +12,8 @@ CHANNEL_ACCESS_TOKEN = "KR7Sclg6pbBPdSFHkwyz3czQpCKOzP6ppszkWFROU8kvM0QdV7XaQ6A7
 USER_FILE = "users.json"
 PRINT_FILE = "prints.json"
 ADMIN_IDS = "admin_ids.json"
-ALL_SUBJECTS = "subjects.json"
+SUBJECTS = "subjects.json"
+GROUPS = "groups.json"
 
 classes = ["A", "B", "C", "D", "E", "F", "G", "H"]
 
@@ -29,9 +30,15 @@ def load_users():
         return json.load(f)
     
 def load_subjects():
-    if not os.path.exists(ALL_SUBJECTS):
+    if not os.path.exists(SUBJECTS):
         return []
-    with open(ALL_SUBJECTS, "r", encoding= "utf-8") as f:
+    with open(SUBJECTS, "r", encoding= "utf-8") as f:
+        return json.load(f)
+    
+def load_groups():
+    if not os.path.exists(GROUPS):
+        return []
+    with open(GROUPS, "r", encoding="utf-8") as f:
         return json.load(f)
 
 def add_users(user_id): # ユーザー情報を追加
@@ -75,6 +82,10 @@ def save_prints(prints):
     with open(PRINT_FILE, "w", encoding= "utf-8") as f:
         json.dump(prints, f, ensure_ascii= False, indent= 2)
 
+def save_groups(groups):
+    with open(GROUPS, "w", encoding="utf-8") as f:
+        json.dump(groups, ensure_ascii= False, indent= 2)
+
 def get_print_numbers_by_page(numbers, page, per_page=11):
     start = page * per_page
     end = start + per_page
@@ -97,6 +108,7 @@ def callback():
         user_id = event["source"]["userId"]
         users = load_users()
         subjects = load_subjects()
+        groups = load_groups()
         prints = load_prints()
         if event["source"]["type"] != "user":
             return "OK"
@@ -175,6 +187,12 @@ def callback():
                 elif text == "ノート追加":
                     reply_message(reply_token, "ノートを追加する科目を選択してください。", show_cancel=True, show_subjects=True)
                     users[user_id]["admin_status"] = "waiting_add_note_subject"
+                    save_users(users)
+                    return "OK"
+                
+                elif text == "グループ作成":
+                    reply_message(reply_token, "グループに追加するクラスを1つずつ選択してください。", show_cancel=True, show_class=True)
+                    users[user_id]["admin_status"] = "waiting_group_class"
                     save_users(users)
                     return "OK"
                 
@@ -348,6 +366,24 @@ def callback():
 
                     reply_message(reply_token, f"{new_print_number}に変更しました。")
                     push_message(f'{users[user_id]["name"]}が\n{subject} - {category} - "{old_print_number}"の名称を\n"{new_print_number}"に変更しました。')
+                    return "OK"
+                
+            elif admin_status == "waiting_group_class":
+                group = users[user_id].get("current_group", [])
+                if text == "完了":
+                    groups.append(group)
+                    save_groups(groups)
+                    reply_message(reply_token, f"グループ{group}が作成されました。")
+                    users[user_id].pop("current_group", None)
+                    save_users(users)
+                    return "OK"
+
+                added_class = text.strip()
+                if added_class not in group:
+                    group.append(added_class)
+                    users[user_id]["current_group"] = group
+                    save_users(users)
+                    reply_message(reply_token, "続けて選択してください。", show_cancel=True, show_class=True)
                     return "OK"
                 
             elif admin_status == "waiting_add_note_subject":
