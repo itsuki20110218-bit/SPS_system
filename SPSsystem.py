@@ -15,7 +15,7 @@ ADMIN_IDS = "admin_ids.json"
 SUBJECTS = "subjects.json"
 GROUPS = "groups.json"
 
-classes = ["A", "B", "C", "D", "E", "F", "G", "H"]
+whole_classes = ["A", "B", "C", "D", "E", "F", "G", "H"]
 
 def load_admin_ids():
     if not os.path.exists(ADMIN_IDS):
@@ -703,7 +703,7 @@ def callback():
                     return "OK"
                 
             elif register_status == "waiting_class":
-                if text not in classes:
+                if text not in whole_classes:
                     users[user_id]["violation"] += 1
                     save_users(users)
                     reply_message(reply_token, "指定されたクラスは見つかりませんでした。\nトーク画面の最下部までスワイプし、一覧からの選択をお願いします。", show_class=True)
@@ -1079,7 +1079,7 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         
     items = []
     if show_class:
-        for i in classes:
+        for i in whole_classes:
             items.append({
                 "type": "action",
                 "action": {
