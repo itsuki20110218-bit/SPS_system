@@ -387,6 +387,20 @@ def callback():
                     reply_message(reply_token, "続けて選択してください。", show_cancel=True, show_class=True)
                     return "OK"
                 
+            elif admin_status == "waiting_group_name":
+                group_name = text.strip()
+                group = users[user_id].get("current_group", [])
+                groups.append({
+                    "name": group_name,
+                    "classes": group
+                })
+                save_groups(groups)
+                reply_message(reply_token, f"グループ{group}が作成されました。")
+                users[user_id].pop("current_group", None)
+                users[user_id]["admin_status"] = "ready"
+                save_users(users)
+                return "OK"
+                
             elif admin_status == "waiting_add_note_subject":
                 subject = text.strip()
                 if subject not in prints:
@@ -529,7 +543,7 @@ def callback():
                 return "OK"
             
             elif admin_status == "waiting_group":
-                if text not in groups:
+                if text not in groups["name"]:
                     if text == "すべて":
                         users[user_id]["current_group"] = "all_classes"
 
@@ -1089,13 +1103,13 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
             )
 
     if show_groups:
-        for group in groups:
+        for group_name in groups:
             items.append({
                 "type": "action",
                 "action": {
                     "type": "message",
-                    "label": ",".join(group),
-                    "text": ",".join(group)
+                    "label": group_name,
+                    "text": group_name
                 }
             })
     if show_confirm:
