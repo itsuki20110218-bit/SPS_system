@@ -375,6 +375,7 @@ def callback():
                     save_groups(groups)
                     reply_message(reply_token, f"グループ{group}が作成されました。")
                     users[user_id].pop("current_group", None)
+                    users[user_id]["admin_status"] = "ready"
                     save_users(users)
                     return "OK"
 
@@ -522,6 +523,21 @@ def callback():
                     return "OK"
                 
                 users[user_id]["admin_current_category"] = category
+                users[user_id]["admin_status"] = "waiting_group"
+                reply_message(reply_token, "グループを選択してください。", show_cancel=True, show_groups=True, user_id=user_id)
+                return "OK"
+            
+            elif admin_status == "waiting_group":
+                if text not in groups:
+                    if text == "すべて":
+                        users[user_id]["current_group"] = "all_classes"
+
+                    else:
+                        reply_message(reply_token, "存在しないグループです。", show_cancel=True, show_groups=True, user_id=user_id)
+                        return "OK"
+
+                group = text.strip()
+                users[user_id]["current_group"] = group
                 users[user_id]["admin_status"] = "waiting_print_number"
                 save_users(users)
                 reply_message(reply_token, "教材の名称を送信してください。")
@@ -1003,7 +1019,7 @@ def callback():
                 reply_message(reply_token, "エラーが発生しました：登録状態が不明です。")
                 return "OK"
 
-def reply_message(reply_token, text, show_cancel=False, show_class=False, show_print_numbers=False, show_subjects=False, show_fields=False, show_end=False, show_categories=False, show_confirm=False, show_others=False, user_id=None):
+def reply_message(reply_token, text, show_cancel=False, show_class=False, show_print_numbers=False, show_subjects=False, show_fields=False, show_groups=False, show_end=False, show_categories=False, show_confirm=False, show_others=False, user_id=None):
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
@@ -1016,6 +1032,7 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
     
     users= load_users()
     subjects = load_subjects()
+    groups = load_groups()
     prints = load_prints()
         
     items = []
@@ -1070,6 +1087,16 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
                 }
             )
 
+    if show_groups:
+        for group in groups:
+            items.append({
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": group,
+                    "text": group
+                }
+            })
     if show_confirm:
         items = [
             {
