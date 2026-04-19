@@ -551,10 +551,11 @@ def callback():
 
                 else:
                     selected = next(g for g in groups if g["name"] == text)
-                    users[user_id]["current_group"] = selected["classes"]
+                    users[user_id]["current_group"] = ",".join(selected["classes"])
 
                 users[user_id]["admin_status"] = "waiting_print_number"
                 save_users(users)
+                prints[subject][field][category].setdefault(users[user_id]["current_group"], {})
                 reply_message(reply_token, "教材の名称を送信してください。")
                 return "OK"
             
@@ -564,7 +565,6 @@ def callback():
                 field = users[user_id]["current_field"]
                 category = users[user_id]["admin_current_category"]
                 group = users[user_id]["current_group"]
-                group = ",".join(group)
                 temp_path = users[user_id]["admin_temp_image"]
 
                 if print_number in prints[subject][field][category][group]:
@@ -578,7 +578,7 @@ def callback():
 
                     os.rename(temp_path, save_path) #ファイルをsave_pathで指定した場所に移動
 
-                    prints.setdefault(subject, {}).setdefault(field, {}).setdefault(category, {}).setdefalut(group, {}).setdefault(print_number, {})["path"] = f"prints/{subject}/{field}/{category}/{group}{print_number}.jpg"
+                    prints.setdefault(subject, {}).setdefault(field, {}).setdefault(category, {}).setdefault(group, {}).setdefault(print_number, {})["path"] = f"prints/{subject}/{field}/{category}/{group}{print_number}.jpg"
                     save_prints(prints)
 
                     users[user_id]["admin_status"] = "ready"
