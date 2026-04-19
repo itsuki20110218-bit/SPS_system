@@ -540,16 +540,19 @@ def callback():
                 return "OK"
             
             elif admin_status == "waiting_group":
-                if text not in groups["name"]:
-                    if text == "すべて":
-                        users[user_id]["current_group"] = "all_classes"
+                group_names = [g["name"] for g in groups]
 
-                    else:
-                        reply_message(reply_token, "存在しないグループです。", show_cancel=True, show_groups=True, user_id=user_id)
-                        return "OK"
+                if text == "すべて":
+                    users[user_id]["current_group"] = "all_classes"
 
-                group = text.strip()
-                users[user_id]["current_group"] = group
+                elif text not in group_names:
+                    reply_message(reply_token, "存在しないグループです。", show_cancel=True, show_groups=True, user_id=user_id)
+                    return "OK"
+
+                else:
+                    selected = next(g for g in groups if g["name"] == text)
+                    users[user_id]["current_group"] = selected["classes"]
+
                 users[user_id]["admin_status"] = "waiting_print_number"
                 save_users(users)
                 reply_message(reply_token, "教材の名称を送信してください。")
@@ -560,31 +563,33 @@ def callback():
                 subject = users[user_id]["admin_current_subject"]
                 field = users[user_id]["current_field"]
                 category = users[user_id]["admin_current_category"]
+                group = users[user_id]["current_group"]
                 temp_path = users[user_id]["admin_temp_image"]
 
-                if print_number in prints[subject][field][category]:
+                if print_number in prints[subject][field][category][group]:
                     reply_message(reply_token, "すでに存在する名称です。新しい名称を送信してください。", show_cancel=True)
                     return "OK"
                 
                 else:
-                    prints_dir = os.path.join(PUBLIC_HTML, "prints", subject, field, category)
+                    prints_dir = os.path.join(PUBLIC_HTML, "prints", subject, field, group, category)
                     os.makedirs(prints_dir, exist_ok=True)
                     save_path = os.path.join(prints_dir, f"{print_number}.jpg")
 
                     os.rename(temp_path, save_path) #ファイルをsave_pathで指定した場所に移動
 
-                    prints.setdefault(subject, {}).setdefault(field, {}).setdefault(category, {}).setdefault(print_number, {})["path"] = f"prints/{subject}/{field}/{category}/{print_number}.jpg"
+                    prints.setdefault(subject, {}).setdefault(field, {}).setdefault(category, {}).setdefalut(group, {}).setdefault(print_number, {})["path"] = f"prints/{subject}/{field}/{category}/{group}{print_number}.jpg"
                     save_prints(prints)
 
                     users[user_id]["admin_status"] = "ready"
                     users[user_id].pop("admin_current_subject", None)
                     users[user_id].pop("current_field", None)
                     users[user_id].pop("admin_current_category", None)
+                    users[user_id].pop("current_group", None)
                     users[user_id].pop("admin_temp_image", None)
                     save_users(users)
 
-                    reply_message(reply_token, f"{field} - {category} - {print_number}が正常に登録されました。")
-                    push_message(f"{users[user_id]['name']}が\n{field} - {category} - {print_number}を登録しました。")
+                    reply_message(reply_token, f"{field} - {category} - {print_number}（{group}用）正常に登録されました。")
+                    push_message(f"{users[user_id]['name']}が\n{field} - {category} - {print_number}（{group}用）を登録しました。")
                     return "OK"
                 
             elif admin_status == "waiting_category_subject":
