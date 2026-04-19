@@ -865,7 +865,7 @@ def callback():
                                     target_group = group
 
                         if text == "次へ":
-                            all_numbers = list(prints[subject][field][category].keys())
+                            all_numbers = list(prints[subject][field][category][target_group].keys())
                             max_page = (len(all_numbers) - 1) // 11
 
                             if max_page <= users[user_id]["print_page"]:
@@ -877,7 +877,7 @@ def callback():
                                 reply_message(reply_token, f"（{users[user_id]['print_page'] +1}/{max_page +1}）\n一覧にない場合は手動対応となりますので、教材名の送信をお願いします。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                                 return "OK"
 
-                        if print_number not in prints[subject][field][category]:
+                        if print_number not in prints[subject][field][category][target_group]:
                             if text in ["もらう", "その他"]:
                                 reply_message(reply_token, "その操作は現在利用できません。\nご希望の教材を一覧から選択、または教材名の送信をお願いします。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                                 users[user_id]["violation"] += 1
