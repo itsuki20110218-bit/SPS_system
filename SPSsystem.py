@@ -134,19 +134,19 @@ def callback():
             return "OK"
         
         if text == "dev_mode":
-            if users[user_id].get("dev_mode", True):
+            if users[user_id].get("dev_mode", "on"):
                 users[user_id].pop("dev_mode", None)
                 save_users(users)
                 reply_message(reply_token, "dev_mode: off")
                 return "OK"
             
             show_status(reply_token, user_id)
-            users[user_id]["dev_mode"] = True
+            users[user_id]["dev_mode"] = "on"
             save_users(users)
             reply_message(reply_token, "dev_mode: on")
             return "OK"
         
-        if users[user_id]["dev_mode"]:
+        if users[user_id].get("dev_mode", "on"):
             show_status(reply_token, user_id)
 
         if users[user_id]["mode"] == "admin":
