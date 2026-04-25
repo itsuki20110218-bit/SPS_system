@@ -132,8 +132,24 @@ def callback():
             reply_message(reply_token, "はじめまして。初回利用のため、ユーザー情報を登録します。\n本名を送信してください。")
             add_users(user_id)
             return "OK"
+        
+        if text == "dev_mode":
+            if users[user_id].get("dev_mode", True):
+                users[user_id].pop("dev_mode", None)
+                save_users(users)
+                reply_message(reply_token, "dev_mode: off")
+                return "OK"
+            
+            show_status(reply_token, user_id)
+            users[user_id]["dev_mode"] = True
+            save_users(users)
+            reply_message(reply_token, "dev_mode: on")
+            return "OK"
+        
+        if users[user_id]["dev_mode"]:
+            show_status(reply_token, user_id)
 
-        elif users[user_id]["mode"] == "admin":
+        if users[user_id]["mode"] == "admin":
             admin_status = users[user_id]["admin_status"]
 
             if text == "キャンセル" and admin_status != "ready":
@@ -536,7 +552,7 @@ def callback():
                 users[user_id]["admin_current_category"] = category
                 users[user_id]["admin_status"] = "waiting_group"
                 save_users(users)
-                reply_message(reply_token, "グループを選択してください。", show_cancel=True, show_groups=True, user_id=user_id)
+                reply_message(reply_token, "教材が受け取り可能なグループを選択してください。", show_cancel=True, show_groups=True, user_id=user_id)
                 return "OK"
             
             elif admin_status == "waiting_group":
@@ -640,6 +656,7 @@ def callback():
                     users[user_id]["admin_status"] = "waiting_group"
                     save_users(users)
                     reply_message(reply_token, "グループを選択してください。", show_cancel=True, show_groups=True, user_id=user_id)
+                    return "OK"
 
 
                 users[user_id].pop("admin_current_subject", None)
@@ -1300,7 +1317,7 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
     }
     requests.post(url, headers=headers, data=json.dumps(body))
 
-def reply_image(reply_token, text, image_url, category):
+def reply_image(reply_token, text, image_url):
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
@@ -1350,6 +1367,22 @@ def reply_image(reply_token, text, image_url, category):
         ]
     }
 
+    requests.post(url, headers=headers, data=json.dumps(body))
+
+def show_status(reply_token, user_id):
+    url = "https://api.line.me/v2/bot/message/reply"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
+    }
+    users = load_users()
+    body = {
+        "replyToken": reply_token,
+        "messages": {
+            "type": "text",
+            "text": json.dumps(users[user_id], ensure_ascii=False, indent=2)
+        }
+    }
     requests.post(url, headers=headers, data=json.dumps(body))
 
 def push_message(text, mention=None):
