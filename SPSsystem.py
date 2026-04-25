@@ -514,7 +514,7 @@ def callback():
                     save_prints(prints)
                     users[user_id]["admin_status"] = "waiting_category_name"
                     users[user_id]["admin_current_subject"] = subject
-                    users[user_id].pop("admin_temp_image", None)
+                    users[user_id]["current_field"] = field
                     save_users(users)
                     reply_message(reply_token, "カテゴリが存在しないため、作成します。\nカテゴリ名を送信してください。", show_cancel=True)
                     return "OK"
@@ -634,6 +634,13 @@ def callback():
                 os.makedirs(category_dir, exist_ok=True)
                 prints[subject][field].setdefault(category_name, {})
                 save_prints(prints)
+
+                if users[user_id]["admin_temp_image"]:
+                    users[user_id]["admin_current_category"] = category_name
+                    users[user_id]["admin_status"] = "waiting_group"
+                    save_users(users)
+                    reply_message(reply_token, "グループを選択してください。", show_cancel=True, show_groups=True, user_id=user_id)
+
 
                 users[user_id].pop("admin_current_subject", None)
                 users[user_id]["admin_status"] = "ready"
