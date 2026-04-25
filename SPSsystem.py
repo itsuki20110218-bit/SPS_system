@@ -508,7 +508,7 @@ def callback():
                     reply_message(reply_token, "不明な分野です。\n一覧から分野を選択してください。", show_cancel=True, show_fields=True)
                     return "OK"
                 
-                if subject not in prints:
+                if subject not in prints or field not in prints[subject]:
                     prints.setdefault(subject, {})
                     prints[subject].setdefault(field, {})
                     save_prints(prints)
