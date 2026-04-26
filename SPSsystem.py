@@ -1313,7 +1313,7 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
         )
 
         if users[user_id].get("admin_status") == "waiting_delete_print_number":
-            target_group = text
+            target_group = users[user_id]["current_group"]
         
         else:
             user_class = users[user_id]["class"]
