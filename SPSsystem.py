@@ -261,15 +261,21 @@ def callback():
                 return "OK"
             
             elif admin_status == "waiting_delete_print_group":
-                group = text.strip()
+                group_names = [g["name"] for g in groups]
                 subject = users[user_id]["admin_current_subject"]
                 field = users[user_id]["current_field"]
                 category = users[user_id]["admin_current_category"]
-                if group not in prints[subject][field][category]:
-                    reply_message(reply_token, "指定されたグループには教材が存在しません。", show_cancel=True, show_groups=True)
+                if text == "すべて":
+                    users[user_id]["current_group"] = "all_classes"
+
+                elif text not in group_names:
+                    reply_message(reply_token, "指定されたグループは存在しません。", show_cancel=True, show_groups=True, user_id=user_id)
                     return "OK"
+
+                else:
+                    selected = next(g for g in groups if g["name"] == text)
+                    users[user_id]["current_group"] = ",".join(selected["classes"])
                 
-                users[user_id]["current_group"] = group
                 users[user_id]["admin_status"] = "waiting_delete_print_number"
                 save_users(users)
                 reply_message(reply_token, "削除する教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
