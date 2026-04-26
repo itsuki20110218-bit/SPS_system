@@ -300,7 +300,7 @@ def callback():
                             reply_message(reply_token, "次を表示します。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                             return "OK"
                         
-                if print_number not in prints[subject][category]:
+                if print_number not in prints[subject][field][category][group]:
                     reply_message(reply_token, "指定された教材は存在しません。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                     return "OK"
 
