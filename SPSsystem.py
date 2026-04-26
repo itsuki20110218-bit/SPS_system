@@ -232,7 +232,7 @@ def callback():
                     reply_message(reply_token, "削除する教材が登録されている分野を選択してください。", show_cancel=True, show_fields=True, user_id=user_id)
                     return "OK"
                 
-            elif admin_status == "admin_delete_print_field":
+            elif admin_status == "waiting_delete_print_field":
                 field = text.strip()
                 subject = users[user_id]["admin_current_subject"]
                 if field not in prints[subject]:
