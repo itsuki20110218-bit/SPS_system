@@ -155,6 +155,9 @@ def callback():
             if text == "キャンセル" and admin_status != "ready":
                 users[user_id]["admin_status"] = "ready"
                 users[user_id].pop("admin_current_subject", None)
+                users[user_id].pop("current_field", None)
+                users[user_id].pop("admin_current_category", None)
+                users[user_id].pop("current_group", None)
                 users[user_id].pop("admin_temp_image", None)
                 users[user_id].pop("print_page", None)
                 users[user_id].pop("current_print_number", None)
@@ -189,7 +192,7 @@ def callback():
                     return "OK"
                 
                 elif text == "その他":
-                    reply_message(reply_token, "削除する教材の科目を選択してください。", show_cancel=True, show_subjects=True)
+                    reply_message(reply_token, "削除する教材が登録されている科目を選択してください。", show_cancel=True, show_subjects=True)
                     users[user_id]["admin_status"] = "waiting_delete_subject"
                     save_users(users)
                     return "OK"
@@ -219,25 +222,54 @@ def callback():
             elif admin_status == "waiting_delete_subject":
                 subject = text.strip()
                 if subject not in prints:
-                    reply_message(reply_token, "指定された科目は存在しません。", show_cancel=True, show_subjects=True)
+                    reply_message(reply_token, "指定された科目には教材が存在しません。", show_cancel=True, show_subjects=True, user_id=user_id)
                     save_users(users)
                     return "OK"
                 else:
-                    users[user_id]["admin_status"] = "waiting_delete_print_category"
+                    users[user_id]["admin_status"] = "waiting_delete_print_field"
                     users[user_id]["admin_current_subject"] = subject
-                    users[user_id]["print_page"] = 0
                     save_users(users)
-                    reply_message(reply_token, "カテゴリを選択してください。", show_cancel=True, show_categories=True, user_id=user_id)
+                    reply_message(reply_token, "削除する教材が登録されている分野を選択してください。", show_cancel=True, show_fields=True, user_id=user_id)
                     return "OK"
+                
+            elif admin_status == "admin_delete_print_field":
+                field = text.strip()
+                subject = users[user_id]["admin_current_subject"]
+                if field not in prints[subject]:
+                    reply_message(reply_token, "指定された分野には教材が存在しません。", show_cancel=True, show_fields=True, user_id=user_id)
+                    return "OK"
+                
+                users[user_id]["admin_status"] = "waiting_delete_print_category"
+                users[user_id]["current_field"] = field
+                users[user_id]["print_page"] = 0
+                save_users(users)
+                reply_message(reply_token, "削除する教材が登録されているカテゴリを選択してください。", show_cancel=True, show_categories=True, user_id=user_id)
+                return "OK"
                 
             elif admin_status == "waiting_delete_print_category":
                 category = text.strip()
                 subject = users[user_id]["admin_current_subject"]
-                if category not in prints.get(subject, {}):
-                    reply_message(reply_token, "存在しないカテゴリ名です。", show_cancel=True, show_categories=True, user_id=user_id)
+                field = users[user_id]["current_field"]
+                if category not in prints[subject][field]:
+                    reply_message(reply_token, "指定されたカテゴリは存在しません。", show_cancel=True, show_categories=True, user_id=user_id)
                     return "OK"
                 
                 users[user_id]["admin_current_category"] = category
+                users[user_id]["admin_status"] = "waiting_delete_print_group"
+                save_users(users)
+                reply_message(reply_token, "削除する教材が登録されているグループを選択してください。", show_cancel=True, show_groups=True)
+                return "OK"
+            
+            elif admin_status == "waiting_delete_print_group":
+                group = text.strip()
+                subject = users[user_id]["admin_current_subject"]
+                field = users[user_id]["current_field"]
+                category = users[user_id]["admin_current_category"]
+                if group not in prints[subject][field][category]:
+                    reply_message(reply_token, "指定されたグループには教材が存在しません。", show_cancel=True, show_groups=True)
+                    return "OK"
+                
+                users[user_id]["current_group"] = group
                 users[user_id]["admin_status"] = "waiting_delete_print_number"
                 save_users(users)
                 reply_message(reply_token, "削除する教材を選択してください。", show_cancel=True, show_print_numbers=True, user_id=user_id)
@@ -246,9 +278,11 @@ def callback():
             elif admin_status == "waiting_delete_print_number":
                 print_number = text.strip()
                 subject = users[user_id]["admin_current_subject"]
+                field = users[user_id]["current_field"]
                 category = users[user_id]["admin_current_category"]
+                group = users[user_id]["current_group"]
                 if text == "次へ":
-                        all_numbers = list(prints[subject][category].keys())
+                        all_numbers = list(prints[subject][field][category][group].keys())
                         max_page = (len(all_numbers) - 1) // 11
 
                         if max_page <= users[user_id]["print_page"]:
@@ -261,24 +295,32 @@ def callback():
                             return "OK"
                         
                 if print_number not in prints[subject][category]:
-                    reply_message(reply_token, "指定された教材は存在しません。")
-                    users[user_id]["admin_status"] = "ready"
-                    users[user_id].pop("admin_current_subject", None)
-                    users[user_id].pop("print_page",  None)
-                    save_users(users)
+                    reply_message(reply_token, "指定された教材は存在しません。", show_cancel=True, show_print_numbers=True, user_id=user_id)
                     return "OK"
 
-                image_path = prints[subject][category][print_number]["path"]
+                image_path = prints[subject][field][category][group][print_number]["path"]
                 file_path = os.path.join(PUBLIC_HTML, image_path)
                 if os.path.exists(file_path):
                     os.remove(file_path)
-                    del prints[subject][category][print_number]
+                    del prints[subject][field][category][group][print_number]
                     save_prints(prints)
 
-                if not prints[subject][category]:
-                    category_dir = os.path.join(PUBLIC_HTML, "prints", subject, category)
+                if not prints[subject][field][category][group]:
+                    category_dir = os.path.join(PUBLIC_HTML, "prints", subject, field, category, group)
                     os.rmdir(category_dir)
-                    del prints[subject][category]
+                    del prints[subject][field][category][group]
+                    save_prints(prints)
+                
+                if not prints[subject][field][category]:
+                    category_dir = os.path.join(PUBLIC_HTML, "prints", subject, field, category)
+                    os.rmdir(category_dir)
+                    del prints[subject][field][category]
+                    save_prints(prints)
+
+                if not prints[subject][field]:
+                    category_dir = os.path.join(PUBLIC_HTML, "prints", subject, field)
+                    os.rmdir(category_dir)
+                    del prints[subject][field]
                     save_prints(prints)
 
                 if not prints[subject]:
@@ -290,10 +332,11 @@ def callback():
                 users[user_id].pop("print_page", None)
                 users[user_id]["admin_status"] = "ready"
                 users[user_id].pop("admin_current_subject", None)
+                users[user_id].pop("current_field", None)
                 users[user_id].pop("admin_current_category", None)
+                users[user_id].pop("current_group", None)
                 save_users(users)
-                reply_message(reply_token, f"削除済み：{subject} - {category} - {print_number}")
-                push_message(f"{users[user_id]['name']}が\n{subject} - {category} - {print_number}を削除しました。")
+                reply_message(reply_token, f"{field} - {category} - {print_number}（{group}用）を削除しました。")
                 return "OK"
             
             elif admin_status == "waiting_edit_subject":
@@ -576,7 +619,7 @@ def callback():
                 save_users(users)
                 prints[subject][field][category].setdefault(users[user_id]["current_group"], {})
                 save_prints(prints)
-                reply_message(reply_token, "教材の名称を送信してください。")
+                reply_message(reply_token, "教材の名称を送信してください。", show_cancel=True)
                 return "OK"
             
             elif admin_status == "waiting_print_number":
@@ -662,7 +705,7 @@ def callback():
                 users[user_id].pop("admin_current_subject", None)
                 users[user_id]["admin_status"] = "ready"
                 save_users(users)
-                reply_message(reply_token, f"{field}内に{category_name}が正常に作成されました。\n教材を登録する場合は、画像ファイルを送信してください。")
+                reply_message(reply_token, f"{field}内に{category_name}を作成しました。\n教材を登録する場合は、画像ファイルを送信してください。")
                 push_message(f'{users[user_id]["name"]}が{field}内にカテゴリ"{category_name}"を作成しました。')
                 return "OK"
 
@@ -769,6 +812,8 @@ def callback():
                     users[user_id]["service_status"] = "None"
                     users[user_id]["current_subject"] = "None"
                     users[user_id].pop("current_field", None)
+                    users[user_id].pop("current_category", None)
+                    users[user_id].pop("current_group", None)
                     users[user_id].pop("print_page", None)
                     users[user_id].pop("current_print_number", None)
                     users[user_id].pop("suggested_miss_place", None)
