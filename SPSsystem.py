@@ -1312,14 +1312,18 @@ def reply_message(reply_token, text, show_cancel=False, show_class=False, show_p
             else users[user_id].get("current_category")
         )
 
-        user_class = users[user_id]["class"]
-        for group in prints[subject][field][category]:
-            if group == "all_classes":
-                target_group = group
-            else:
-                classes = group.split(",")
-                if user_class in classes:
+        if users[user_id].get("admin_status") == "waiting_delete_print_number":
+            target_group = text
+        
+        else:
+            user_class = users[user_id]["class"]
+            for group in prints[subject][field][category]:
+                if group == "all_classes":
                     target_group = group
+                else:
+                    classes = group.split(",")
+                    if user_class in classes:
+                        target_group = group
 
         page = users[user_id].get("print_page", 0)
         all_numbers = list(prints[subject][field][category][target_group].keys())
