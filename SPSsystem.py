@@ -984,7 +984,7 @@ def callback():
                             if note
                             else f'{category}の"{print_number}"です。'
                         )
-                        reply_image(reply_token, text, image_url, category)
+                        reply_image(reply_token, text, image_url)
                         users[user_id]["current_print_number"] = print_number
                         users[user_id]["service_status"] = "done"
                         users[user_id].pop("print_page", None)
